@@ -7,6 +7,7 @@ package invertotanks;
 class Tank
 {
 	private static inline var vx = 0.1; 
+	private var controller:Controller;
 	
 	public var x(default, null):Float;
 	public var above(default, null):Bool;

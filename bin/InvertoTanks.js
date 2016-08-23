@@ -587,6 +587,428 @@ Xml.prototype = {
 	}
 	,__class__: Xml
 };
+var format_abc_Index = $hxClasses["format.abc.Index"] = { __ename__ : true, __constructs__ : ["Idx"] };
+format_abc_Index.Idx = function(v) { var $x = ["Idx",0,v]; $x.__enum__ = format_abc_Index; $x.toString = $estr; return $x; };
+format_abc_Index.__empty_constructs__ = [];
+var format_abc_Namespace = $hxClasses["format.abc.Namespace"] = { __ename__ : true, __constructs__ : ["NPrivate","NNamespace","NPublic","NInternal","NProtected","NExplicit","NStaticProtected"] };
+format_abc_Namespace.NPrivate = function(ns) { var $x = ["NPrivate",0,ns]; $x.__enum__ = format_abc_Namespace; $x.toString = $estr; return $x; };
+format_abc_Namespace.NNamespace = function(ns) { var $x = ["NNamespace",1,ns]; $x.__enum__ = format_abc_Namespace; $x.toString = $estr; return $x; };
+format_abc_Namespace.NPublic = function(ns) { var $x = ["NPublic",2,ns]; $x.__enum__ = format_abc_Namespace; $x.toString = $estr; return $x; };
+format_abc_Namespace.NInternal = function(ns) { var $x = ["NInternal",3,ns]; $x.__enum__ = format_abc_Namespace; $x.toString = $estr; return $x; };
+format_abc_Namespace.NProtected = function(ns) { var $x = ["NProtected",4,ns]; $x.__enum__ = format_abc_Namespace; $x.toString = $estr; return $x; };
+format_abc_Namespace.NExplicit = function(ns) { var $x = ["NExplicit",5,ns]; $x.__enum__ = format_abc_Namespace; $x.toString = $estr; return $x; };
+format_abc_Namespace.NStaticProtected = function(ns) { var $x = ["NStaticProtected",6,ns]; $x.__enum__ = format_abc_Namespace; $x.toString = $estr; return $x; };
+format_abc_Namespace.__empty_constructs__ = [];
+var format_abc_Name = $hxClasses["format.abc.Name"] = { __ename__ : true, __constructs__ : ["NName","NMulti","NRuntime","NRuntimeLate","NMultiLate","NAttrib","NParams"] };
+format_abc_Name.NName = function(name,ns) { var $x = ["NName",0,name,ns]; $x.__enum__ = format_abc_Name; $x.toString = $estr; return $x; };
+format_abc_Name.NMulti = function(name,ns) { var $x = ["NMulti",1,name,ns]; $x.__enum__ = format_abc_Name; $x.toString = $estr; return $x; };
+format_abc_Name.NRuntime = function(name) { var $x = ["NRuntime",2,name]; $x.__enum__ = format_abc_Name; $x.toString = $estr; return $x; };
+format_abc_Name.NRuntimeLate = ["NRuntimeLate",3];
+format_abc_Name.NRuntimeLate.toString = $estr;
+format_abc_Name.NRuntimeLate.__enum__ = format_abc_Name;
+format_abc_Name.NMultiLate = function(nset) { var $x = ["NMultiLate",4,nset]; $x.__enum__ = format_abc_Name; $x.toString = $estr; return $x; };
+format_abc_Name.NAttrib = function(n) { var $x = ["NAttrib",5,n]; $x.__enum__ = format_abc_Name; $x.toString = $estr; return $x; };
+format_abc_Name.NParams = function(n,params) { var $x = ["NParams",6,n,params]; $x.__enum__ = format_abc_Name; $x.toString = $estr; return $x; };
+format_abc_Name.__empty_constructs__ = [format_abc_Name.NRuntimeLate];
+var format_abc_Value = $hxClasses["format.abc.Value"] = { __ename__ : true, __constructs__ : ["VNull","VBool","VString","VInt","VUInt","VFloat","VNamespace"] };
+format_abc_Value.VNull = ["VNull",0];
+format_abc_Value.VNull.toString = $estr;
+format_abc_Value.VNull.__enum__ = format_abc_Value;
+format_abc_Value.VBool = function(b) { var $x = ["VBool",1,b]; $x.__enum__ = format_abc_Value; $x.toString = $estr; return $x; };
+format_abc_Value.VString = function(i) { var $x = ["VString",2,i]; $x.__enum__ = format_abc_Value; $x.toString = $estr; return $x; };
+format_abc_Value.VInt = function(i) { var $x = ["VInt",3,i]; $x.__enum__ = format_abc_Value; $x.toString = $estr; return $x; };
+format_abc_Value.VUInt = function(i) { var $x = ["VUInt",4,i]; $x.__enum__ = format_abc_Value; $x.toString = $estr; return $x; };
+format_abc_Value.VFloat = function(f) { var $x = ["VFloat",5,f]; $x.__enum__ = format_abc_Value; $x.toString = $estr; return $x; };
+format_abc_Value.VNamespace = function(kind,ns) { var $x = ["VNamespace",6,kind,ns]; $x.__enum__ = format_abc_Value; $x.toString = $estr; return $x; };
+format_abc_Value.__empty_constructs__ = [format_abc_Value.VNull];
+var format_abc_MethodKind = $hxClasses["format.abc.MethodKind"] = { __ename__ : true, __constructs__ : ["KNormal","KGetter","KSetter"] };
+format_abc_MethodKind.KNormal = ["KNormal",0];
+format_abc_MethodKind.KNormal.toString = $estr;
+format_abc_MethodKind.KNormal.__enum__ = format_abc_MethodKind;
+format_abc_MethodKind.KGetter = ["KGetter",1];
+format_abc_MethodKind.KGetter.toString = $estr;
+format_abc_MethodKind.KGetter.__enum__ = format_abc_MethodKind;
+format_abc_MethodKind.KSetter = ["KSetter",2];
+format_abc_MethodKind.KSetter.toString = $estr;
+format_abc_MethodKind.KSetter.__enum__ = format_abc_MethodKind;
+format_abc_MethodKind.__empty_constructs__ = [format_abc_MethodKind.KNormal,format_abc_MethodKind.KGetter,format_abc_MethodKind.KSetter];
+var format_abc_FieldKind = $hxClasses["format.abc.FieldKind"] = { __ename__ : true, __constructs__ : ["FVar","FMethod","FClass","FFunction"] };
+format_abc_FieldKind.FVar = function(type,value,$const) { var $x = ["FVar",0,type,value,$const]; $x.__enum__ = format_abc_FieldKind; $x.toString = $estr; return $x; };
+format_abc_FieldKind.FMethod = function(type,k,isFinal,isOverride) { var $x = ["FMethod",1,type,k,isFinal,isOverride]; $x.__enum__ = format_abc_FieldKind; $x.toString = $estr; return $x; };
+format_abc_FieldKind.FClass = function(c) { var $x = ["FClass",2,c]; $x.__enum__ = format_abc_FieldKind; $x.toString = $estr; return $x; };
+format_abc_FieldKind.FFunction = function(f) { var $x = ["FFunction",3,f]; $x.__enum__ = format_abc_FieldKind; $x.toString = $estr; return $x; };
+format_abc_FieldKind.__empty_constructs__ = [];
+var format_abc_ABCData = function() {
+};
+$hxClasses["format.abc.ABCData"] = format_abc_ABCData;
+format_abc_ABCData.__name__ = ["format","abc","ABCData"];
+format_abc_ABCData.prototype = {
+	get: function(t,i) {
+		return t[i[2] - 1];
+	}
+	,__class__: format_abc_ABCData
+};
+var format_abc_OpCode = $hxClasses["format.abc.OpCode"] = { __ename__ : true, __constructs__ : ["OBreakPoint","ONop","OThrow","OGetSuper","OSetSuper","ODxNs","ODxNsLate","ORegKill","OLabel","OJump","OSwitch","OPushWith","OPopScope","OForIn","OHasNext","ONull","OUndefined","OForEach","OSmallInt","OInt","OTrue","OFalse","ONaN","OPop","ODup","OSwap","OString","OIntRef","OUIntRef","OFloat","OScope","ONamespace","ONext","OFunction","OCallStack","OConstruct","OCallMethod","OCallStatic","OCallSuper","OCallProperty","ORetVoid","ORet","OConstructSuper","OConstructProperty","OCallPropLex","OCallSuperVoid","OCallPropVoid","OApplyType","OObject","OArray","ONewBlock","OClassDef","OGetDescendants","OCatch","OFindPropStrict","OFindProp","OFindDefinition","OGetLex","OSetProp","OReg","OSetReg","OGetGlobalScope","OGetScope","OGetProp","OInitProp","ODeleteProp","OGetSlot","OSetSlot","OToString","OToXml","OToXmlAttr","OToInt","OToUInt","OToNumber","OToBool","OToObject","OCheckIsXml","OCast","OAsAny","OAsString","OAsType","OAsObject","OIncrReg","ODecrReg","OTypeof","OInstanceOf","OIsType","OIncrIReg","ODecrIReg","OThis","OSetThis","ODebugReg","ODebugLine","ODebugFile","OBreakPointLine","OTimestamp","OOp","OUnknown"] };
+format_abc_OpCode.OBreakPoint = ["OBreakPoint",0];
+format_abc_OpCode.OBreakPoint.toString = $estr;
+format_abc_OpCode.OBreakPoint.__enum__ = format_abc_OpCode;
+format_abc_OpCode.ONop = ["ONop",1];
+format_abc_OpCode.ONop.toString = $estr;
+format_abc_OpCode.ONop.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OThrow = ["OThrow",2];
+format_abc_OpCode.OThrow.toString = $estr;
+format_abc_OpCode.OThrow.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OGetSuper = function(v) { var $x = ["OGetSuper",3,v]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OSetSuper = function(v) { var $x = ["OSetSuper",4,v]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.ODxNs = function(v) { var $x = ["ODxNs",5,v]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.ODxNsLate = ["ODxNsLate",6];
+format_abc_OpCode.ODxNsLate.toString = $estr;
+format_abc_OpCode.ODxNsLate.__enum__ = format_abc_OpCode;
+format_abc_OpCode.ORegKill = function(r) { var $x = ["ORegKill",7,r]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OLabel = ["OLabel",8];
+format_abc_OpCode.OLabel.toString = $estr;
+format_abc_OpCode.OLabel.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OJump = function(j,delta) { var $x = ["OJump",9,j,delta]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OSwitch = function(def,deltas) { var $x = ["OSwitch",10,def,deltas]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OPushWith = ["OPushWith",11];
+format_abc_OpCode.OPushWith.toString = $estr;
+format_abc_OpCode.OPushWith.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OPopScope = ["OPopScope",12];
+format_abc_OpCode.OPopScope.toString = $estr;
+format_abc_OpCode.OPopScope.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OForIn = ["OForIn",13];
+format_abc_OpCode.OForIn.toString = $estr;
+format_abc_OpCode.OForIn.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OHasNext = ["OHasNext",14];
+format_abc_OpCode.OHasNext.toString = $estr;
+format_abc_OpCode.OHasNext.__enum__ = format_abc_OpCode;
+format_abc_OpCode.ONull = ["ONull",15];
+format_abc_OpCode.ONull.toString = $estr;
+format_abc_OpCode.ONull.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OUndefined = ["OUndefined",16];
+format_abc_OpCode.OUndefined.toString = $estr;
+format_abc_OpCode.OUndefined.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OForEach = ["OForEach",17];
+format_abc_OpCode.OForEach.toString = $estr;
+format_abc_OpCode.OForEach.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OSmallInt = function(v) { var $x = ["OSmallInt",18,v]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OInt = function(v) { var $x = ["OInt",19,v]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OTrue = ["OTrue",20];
+format_abc_OpCode.OTrue.toString = $estr;
+format_abc_OpCode.OTrue.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OFalse = ["OFalse",21];
+format_abc_OpCode.OFalse.toString = $estr;
+format_abc_OpCode.OFalse.__enum__ = format_abc_OpCode;
+format_abc_OpCode.ONaN = ["ONaN",22];
+format_abc_OpCode.ONaN.toString = $estr;
+format_abc_OpCode.ONaN.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OPop = ["OPop",23];
+format_abc_OpCode.OPop.toString = $estr;
+format_abc_OpCode.OPop.__enum__ = format_abc_OpCode;
+format_abc_OpCode.ODup = ["ODup",24];
+format_abc_OpCode.ODup.toString = $estr;
+format_abc_OpCode.ODup.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OSwap = ["OSwap",25];
+format_abc_OpCode.OSwap.toString = $estr;
+format_abc_OpCode.OSwap.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OString = function(v) { var $x = ["OString",26,v]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OIntRef = function(v) { var $x = ["OIntRef",27,v]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OUIntRef = function(v) { var $x = ["OUIntRef",28,v]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OFloat = function(v) { var $x = ["OFloat",29,v]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OScope = ["OScope",30];
+format_abc_OpCode.OScope.toString = $estr;
+format_abc_OpCode.OScope.__enum__ = format_abc_OpCode;
+format_abc_OpCode.ONamespace = function(v) { var $x = ["ONamespace",31,v]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.ONext = function(r1,r2) { var $x = ["ONext",32,r1,r2]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OFunction = function(f) { var $x = ["OFunction",33,f]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OCallStack = function(nargs) { var $x = ["OCallStack",34,nargs]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OConstruct = function(nargs) { var $x = ["OConstruct",35,nargs]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OCallMethod = function(slot,nargs) { var $x = ["OCallMethod",36,slot,nargs]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OCallStatic = function(meth,nargs) { var $x = ["OCallStatic",37,meth,nargs]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OCallSuper = function(name,nargs) { var $x = ["OCallSuper",38,name,nargs]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OCallProperty = function(name,nargs) { var $x = ["OCallProperty",39,name,nargs]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.ORetVoid = ["ORetVoid",40];
+format_abc_OpCode.ORetVoid.toString = $estr;
+format_abc_OpCode.ORetVoid.__enum__ = format_abc_OpCode;
+format_abc_OpCode.ORet = ["ORet",41];
+format_abc_OpCode.ORet.toString = $estr;
+format_abc_OpCode.ORet.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OConstructSuper = function(nargs) { var $x = ["OConstructSuper",42,nargs]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OConstructProperty = function(name,nargs) { var $x = ["OConstructProperty",43,name,nargs]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OCallPropLex = function(name,nargs) { var $x = ["OCallPropLex",44,name,nargs]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OCallSuperVoid = function(name,nargs) { var $x = ["OCallSuperVoid",45,name,nargs]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OCallPropVoid = function(name,nargs) { var $x = ["OCallPropVoid",46,name,nargs]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OApplyType = function(nargs) { var $x = ["OApplyType",47,nargs]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OObject = function(nfields) { var $x = ["OObject",48,nfields]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OArray = function(nvalues) { var $x = ["OArray",49,nvalues]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.ONewBlock = ["ONewBlock",50];
+format_abc_OpCode.ONewBlock.toString = $estr;
+format_abc_OpCode.ONewBlock.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OClassDef = function(c) { var $x = ["OClassDef",51,c]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OGetDescendants = function(c) { var $x = ["OGetDescendants",52,c]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OCatch = function(c) { var $x = ["OCatch",53,c]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OFindPropStrict = function(p) { var $x = ["OFindPropStrict",54,p]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OFindProp = function(p) { var $x = ["OFindProp",55,p]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OFindDefinition = function(d) { var $x = ["OFindDefinition",56,d]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OGetLex = function(p) { var $x = ["OGetLex",57,p]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OSetProp = function(p) { var $x = ["OSetProp",58,p]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OReg = function(r) { var $x = ["OReg",59,r]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OSetReg = function(r) { var $x = ["OSetReg",60,r]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OGetGlobalScope = ["OGetGlobalScope",61];
+format_abc_OpCode.OGetGlobalScope.toString = $estr;
+format_abc_OpCode.OGetGlobalScope.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OGetScope = function(n) { var $x = ["OGetScope",62,n]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OGetProp = function(p) { var $x = ["OGetProp",63,p]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OInitProp = function(p) { var $x = ["OInitProp",64,p]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.ODeleteProp = function(p) { var $x = ["ODeleteProp",65,p]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OGetSlot = function(s) { var $x = ["OGetSlot",66,s]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OSetSlot = function(s) { var $x = ["OSetSlot",67,s]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OToString = ["OToString",68];
+format_abc_OpCode.OToString.toString = $estr;
+format_abc_OpCode.OToString.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OToXml = ["OToXml",69];
+format_abc_OpCode.OToXml.toString = $estr;
+format_abc_OpCode.OToXml.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OToXmlAttr = ["OToXmlAttr",70];
+format_abc_OpCode.OToXmlAttr.toString = $estr;
+format_abc_OpCode.OToXmlAttr.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OToInt = ["OToInt",71];
+format_abc_OpCode.OToInt.toString = $estr;
+format_abc_OpCode.OToInt.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OToUInt = ["OToUInt",72];
+format_abc_OpCode.OToUInt.toString = $estr;
+format_abc_OpCode.OToUInt.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OToNumber = ["OToNumber",73];
+format_abc_OpCode.OToNumber.toString = $estr;
+format_abc_OpCode.OToNumber.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OToBool = ["OToBool",74];
+format_abc_OpCode.OToBool.toString = $estr;
+format_abc_OpCode.OToBool.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OToObject = ["OToObject",75];
+format_abc_OpCode.OToObject.toString = $estr;
+format_abc_OpCode.OToObject.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OCheckIsXml = ["OCheckIsXml",76];
+format_abc_OpCode.OCheckIsXml.toString = $estr;
+format_abc_OpCode.OCheckIsXml.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OCast = function(t) { var $x = ["OCast",77,t]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OAsAny = ["OAsAny",78];
+format_abc_OpCode.OAsAny.toString = $estr;
+format_abc_OpCode.OAsAny.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OAsString = ["OAsString",79];
+format_abc_OpCode.OAsString.toString = $estr;
+format_abc_OpCode.OAsString.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OAsType = function(t) { var $x = ["OAsType",80,t]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OAsObject = ["OAsObject",81];
+format_abc_OpCode.OAsObject.toString = $estr;
+format_abc_OpCode.OAsObject.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OIncrReg = function(r) { var $x = ["OIncrReg",82,r]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.ODecrReg = function(r) { var $x = ["ODecrReg",83,r]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OTypeof = ["OTypeof",84];
+format_abc_OpCode.OTypeof.toString = $estr;
+format_abc_OpCode.OTypeof.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OInstanceOf = ["OInstanceOf",85];
+format_abc_OpCode.OInstanceOf.toString = $estr;
+format_abc_OpCode.OInstanceOf.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OIsType = function(t) { var $x = ["OIsType",86,t]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OIncrIReg = function(r) { var $x = ["OIncrIReg",87,r]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.ODecrIReg = function(r) { var $x = ["ODecrIReg",88,r]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OThis = ["OThis",89];
+format_abc_OpCode.OThis.toString = $estr;
+format_abc_OpCode.OThis.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OSetThis = ["OSetThis",90];
+format_abc_OpCode.OSetThis.toString = $estr;
+format_abc_OpCode.OSetThis.__enum__ = format_abc_OpCode;
+format_abc_OpCode.ODebugReg = function(name,r,line) { var $x = ["ODebugReg",91,name,r,line]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.ODebugLine = function(line) { var $x = ["ODebugLine",92,line]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.ODebugFile = function(file) { var $x = ["ODebugFile",93,file]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OBreakPointLine = function(n) { var $x = ["OBreakPointLine",94,n]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OTimestamp = ["OTimestamp",95];
+format_abc_OpCode.OTimestamp.toString = $estr;
+format_abc_OpCode.OTimestamp.__enum__ = format_abc_OpCode;
+format_abc_OpCode.OOp = function(op) { var $x = ["OOp",96,op]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.OUnknown = function($byte) { var $x = ["OUnknown",97,$byte]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
+format_abc_OpCode.__empty_constructs__ = [format_abc_OpCode.OBreakPoint,format_abc_OpCode.ONop,format_abc_OpCode.OThrow,format_abc_OpCode.ODxNsLate,format_abc_OpCode.OLabel,format_abc_OpCode.OPushWith,format_abc_OpCode.OPopScope,format_abc_OpCode.OForIn,format_abc_OpCode.OHasNext,format_abc_OpCode.ONull,format_abc_OpCode.OUndefined,format_abc_OpCode.OForEach,format_abc_OpCode.OTrue,format_abc_OpCode.OFalse,format_abc_OpCode.ONaN,format_abc_OpCode.OPop,format_abc_OpCode.ODup,format_abc_OpCode.OSwap,format_abc_OpCode.OScope,format_abc_OpCode.ORetVoid,format_abc_OpCode.ORet,format_abc_OpCode.ONewBlock,format_abc_OpCode.OGetGlobalScope,format_abc_OpCode.OToString,format_abc_OpCode.OToXml,format_abc_OpCode.OToXmlAttr,format_abc_OpCode.OToInt,format_abc_OpCode.OToUInt,format_abc_OpCode.OToNumber,format_abc_OpCode.OToBool,format_abc_OpCode.OToObject,format_abc_OpCode.OCheckIsXml,format_abc_OpCode.OAsAny,format_abc_OpCode.OAsString,format_abc_OpCode.OAsObject,format_abc_OpCode.OTypeof,format_abc_OpCode.OInstanceOf,format_abc_OpCode.OThis,format_abc_OpCode.OSetThis,format_abc_OpCode.OTimestamp];
+var format_abc_JumpStyle = $hxClasses["format.abc.JumpStyle"] = { __ename__ : true, __constructs__ : ["JNotLt","JNotLte","JNotGt","JNotGte","JAlways","JTrue","JFalse","JEq","JNeq","JLt","JLte","JGt","JGte","JPhysEq","JPhysNeq"] };
+format_abc_JumpStyle.JNotLt = ["JNotLt",0];
+format_abc_JumpStyle.JNotLt.toString = $estr;
+format_abc_JumpStyle.JNotLt.__enum__ = format_abc_JumpStyle;
+format_abc_JumpStyle.JNotLte = ["JNotLte",1];
+format_abc_JumpStyle.JNotLte.toString = $estr;
+format_abc_JumpStyle.JNotLte.__enum__ = format_abc_JumpStyle;
+format_abc_JumpStyle.JNotGt = ["JNotGt",2];
+format_abc_JumpStyle.JNotGt.toString = $estr;
+format_abc_JumpStyle.JNotGt.__enum__ = format_abc_JumpStyle;
+format_abc_JumpStyle.JNotGte = ["JNotGte",3];
+format_abc_JumpStyle.JNotGte.toString = $estr;
+format_abc_JumpStyle.JNotGte.__enum__ = format_abc_JumpStyle;
+format_abc_JumpStyle.JAlways = ["JAlways",4];
+format_abc_JumpStyle.JAlways.toString = $estr;
+format_abc_JumpStyle.JAlways.__enum__ = format_abc_JumpStyle;
+format_abc_JumpStyle.JTrue = ["JTrue",5];
+format_abc_JumpStyle.JTrue.toString = $estr;
+format_abc_JumpStyle.JTrue.__enum__ = format_abc_JumpStyle;
+format_abc_JumpStyle.JFalse = ["JFalse",6];
+format_abc_JumpStyle.JFalse.toString = $estr;
+format_abc_JumpStyle.JFalse.__enum__ = format_abc_JumpStyle;
+format_abc_JumpStyle.JEq = ["JEq",7];
+format_abc_JumpStyle.JEq.toString = $estr;
+format_abc_JumpStyle.JEq.__enum__ = format_abc_JumpStyle;
+format_abc_JumpStyle.JNeq = ["JNeq",8];
+format_abc_JumpStyle.JNeq.toString = $estr;
+format_abc_JumpStyle.JNeq.__enum__ = format_abc_JumpStyle;
+format_abc_JumpStyle.JLt = ["JLt",9];
+format_abc_JumpStyle.JLt.toString = $estr;
+format_abc_JumpStyle.JLt.__enum__ = format_abc_JumpStyle;
+format_abc_JumpStyle.JLte = ["JLte",10];
+format_abc_JumpStyle.JLte.toString = $estr;
+format_abc_JumpStyle.JLte.__enum__ = format_abc_JumpStyle;
+format_abc_JumpStyle.JGt = ["JGt",11];
+format_abc_JumpStyle.JGt.toString = $estr;
+format_abc_JumpStyle.JGt.__enum__ = format_abc_JumpStyle;
+format_abc_JumpStyle.JGte = ["JGte",12];
+format_abc_JumpStyle.JGte.toString = $estr;
+format_abc_JumpStyle.JGte.__enum__ = format_abc_JumpStyle;
+format_abc_JumpStyle.JPhysEq = ["JPhysEq",13];
+format_abc_JumpStyle.JPhysEq.toString = $estr;
+format_abc_JumpStyle.JPhysEq.__enum__ = format_abc_JumpStyle;
+format_abc_JumpStyle.JPhysNeq = ["JPhysNeq",14];
+format_abc_JumpStyle.JPhysNeq.toString = $estr;
+format_abc_JumpStyle.JPhysNeq.__enum__ = format_abc_JumpStyle;
+format_abc_JumpStyle.__empty_constructs__ = [format_abc_JumpStyle.JNotLt,format_abc_JumpStyle.JNotLte,format_abc_JumpStyle.JNotGt,format_abc_JumpStyle.JNotGte,format_abc_JumpStyle.JAlways,format_abc_JumpStyle.JTrue,format_abc_JumpStyle.JFalse,format_abc_JumpStyle.JEq,format_abc_JumpStyle.JNeq,format_abc_JumpStyle.JLt,format_abc_JumpStyle.JLte,format_abc_JumpStyle.JGt,format_abc_JumpStyle.JGte,format_abc_JumpStyle.JPhysEq,format_abc_JumpStyle.JPhysNeq];
+var format_abc_Operation = $hxClasses["format.abc.Operation"] = { __ename__ : true, __constructs__ : ["OpAs","OpNeg","OpIncr","OpDecr","OpNot","OpBitNot","OpAdd","OpSub","OpMul","OpDiv","OpMod","OpShl","OpShr","OpUShr","OpAnd","OpOr","OpXor","OpEq","OpPhysEq","OpLt","OpLte","OpGt","OpGte","OpIs","OpIn","OpIIncr","OpIDecr","OpINeg","OpIAdd","OpISub","OpIMul","OpMemGet8","OpMemGet16","OpMemGet32","OpMemGetFloat","OpMemGetDouble","OpMemSet8","OpMemSet16","OpMemSet32","OpMemSetFloat","OpMemSetDouble","OpSign1","OpSign8","OpSign16"] };
+format_abc_Operation.OpAs = ["OpAs",0];
+format_abc_Operation.OpAs.toString = $estr;
+format_abc_Operation.OpAs.__enum__ = format_abc_Operation;
+format_abc_Operation.OpNeg = ["OpNeg",1];
+format_abc_Operation.OpNeg.toString = $estr;
+format_abc_Operation.OpNeg.__enum__ = format_abc_Operation;
+format_abc_Operation.OpIncr = ["OpIncr",2];
+format_abc_Operation.OpIncr.toString = $estr;
+format_abc_Operation.OpIncr.__enum__ = format_abc_Operation;
+format_abc_Operation.OpDecr = ["OpDecr",3];
+format_abc_Operation.OpDecr.toString = $estr;
+format_abc_Operation.OpDecr.__enum__ = format_abc_Operation;
+format_abc_Operation.OpNot = ["OpNot",4];
+format_abc_Operation.OpNot.toString = $estr;
+format_abc_Operation.OpNot.__enum__ = format_abc_Operation;
+format_abc_Operation.OpBitNot = ["OpBitNot",5];
+format_abc_Operation.OpBitNot.toString = $estr;
+format_abc_Operation.OpBitNot.__enum__ = format_abc_Operation;
+format_abc_Operation.OpAdd = ["OpAdd",6];
+format_abc_Operation.OpAdd.toString = $estr;
+format_abc_Operation.OpAdd.__enum__ = format_abc_Operation;
+format_abc_Operation.OpSub = ["OpSub",7];
+format_abc_Operation.OpSub.toString = $estr;
+format_abc_Operation.OpSub.__enum__ = format_abc_Operation;
+format_abc_Operation.OpMul = ["OpMul",8];
+format_abc_Operation.OpMul.toString = $estr;
+format_abc_Operation.OpMul.__enum__ = format_abc_Operation;
+format_abc_Operation.OpDiv = ["OpDiv",9];
+format_abc_Operation.OpDiv.toString = $estr;
+format_abc_Operation.OpDiv.__enum__ = format_abc_Operation;
+format_abc_Operation.OpMod = ["OpMod",10];
+format_abc_Operation.OpMod.toString = $estr;
+format_abc_Operation.OpMod.__enum__ = format_abc_Operation;
+format_abc_Operation.OpShl = ["OpShl",11];
+format_abc_Operation.OpShl.toString = $estr;
+format_abc_Operation.OpShl.__enum__ = format_abc_Operation;
+format_abc_Operation.OpShr = ["OpShr",12];
+format_abc_Operation.OpShr.toString = $estr;
+format_abc_Operation.OpShr.__enum__ = format_abc_Operation;
+format_abc_Operation.OpUShr = ["OpUShr",13];
+format_abc_Operation.OpUShr.toString = $estr;
+format_abc_Operation.OpUShr.__enum__ = format_abc_Operation;
+format_abc_Operation.OpAnd = ["OpAnd",14];
+format_abc_Operation.OpAnd.toString = $estr;
+format_abc_Operation.OpAnd.__enum__ = format_abc_Operation;
+format_abc_Operation.OpOr = ["OpOr",15];
+format_abc_Operation.OpOr.toString = $estr;
+format_abc_Operation.OpOr.__enum__ = format_abc_Operation;
+format_abc_Operation.OpXor = ["OpXor",16];
+format_abc_Operation.OpXor.toString = $estr;
+format_abc_Operation.OpXor.__enum__ = format_abc_Operation;
+format_abc_Operation.OpEq = ["OpEq",17];
+format_abc_Operation.OpEq.toString = $estr;
+format_abc_Operation.OpEq.__enum__ = format_abc_Operation;
+format_abc_Operation.OpPhysEq = ["OpPhysEq",18];
+format_abc_Operation.OpPhysEq.toString = $estr;
+format_abc_Operation.OpPhysEq.__enum__ = format_abc_Operation;
+format_abc_Operation.OpLt = ["OpLt",19];
+format_abc_Operation.OpLt.toString = $estr;
+format_abc_Operation.OpLt.__enum__ = format_abc_Operation;
+format_abc_Operation.OpLte = ["OpLte",20];
+format_abc_Operation.OpLte.toString = $estr;
+format_abc_Operation.OpLte.__enum__ = format_abc_Operation;
+format_abc_Operation.OpGt = ["OpGt",21];
+format_abc_Operation.OpGt.toString = $estr;
+format_abc_Operation.OpGt.__enum__ = format_abc_Operation;
+format_abc_Operation.OpGte = ["OpGte",22];
+format_abc_Operation.OpGte.toString = $estr;
+format_abc_Operation.OpGte.__enum__ = format_abc_Operation;
+format_abc_Operation.OpIs = ["OpIs",23];
+format_abc_Operation.OpIs.toString = $estr;
+format_abc_Operation.OpIs.__enum__ = format_abc_Operation;
+format_abc_Operation.OpIn = ["OpIn",24];
+format_abc_Operation.OpIn.toString = $estr;
+format_abc_Operation.OpIn.__enum__ = format_abc_Operation;
+format_abc_Operation.OpIIncr = ["OpIIncr",25];
+format_abc_Operation.OpIIncr.toString = $estr;
+format_abc_Operation.OpIIncr.__enum__ = format_abc_Operation;
+format_abc_Operation.OpIDecr = ["OpIDecr",26];
+format_abc_Operation.OpIDecr.toString = $estr;
+format_abc_Operation.OpIDecr.__enum__ = format_abc_Operation;
+format_abc_Operation.OpINeg = ["OpINeg",27];
+format_abc_Operation.OpINeg.toString = $estr;
+format_abc_Operation.OpINeg.__enum__ = format_abc_Operation;
+format_abc_Operation.OpIAdd = ["OpIAdd",28];
+format_abc_Operation.OpIAdd.toString = $estr;
+format_abc_Operation.OpIAdd.__enum__ = format_abc_Operation;
+format_abc_Operation.OpISub = ["OpISub",29];
+format_abc_Operation.OpISub.toString = $estr;
+format_abc_Operation.OpISub.__enum__ = format_abc_Operation;
+format_abc_Operation.OpIMul = ["OpIMul",30];
+format_abc_Operation.OpIMul.toString = $estr;
+format_abc_Operation.OpIMul.__enum__ = format_abc_Operation;
+format_abc_Operation.OpMemGet8 = ["OpMemGet8",31];
+format_abc_Operation.OpMemGet8.toString = $estr;
+format_abc_Operation.OpMemGet8.__enum__ = format_abc_Operation;
+format_abc_Operation.OpMemGet16 = ["OpMemGet16",32];
+format_abc_Operation.OpMemGet16.toString = $estr;
+format_abc_Operation.OpMemGet16.__enum__ = format_abc_Operation;
+format_abc_Operation.OpMemGet32 = ["OpMemGet32",33];
+format_abc_Operation.OpMemGet32.toString = $estr;
+format_abc_Operation.OpMemGet32.__enum__ = format_abc_Operation;
+format_abc_Operation.OpMemGetFloat = ["OpMemGetFloat",34];
+format_abc_Operation.OpMemGetFloat.toString = $estr;
+format_abc_Operation.OpMemGetFloat.__enum__ = format_abc_Operation;
+format_abc_Operation.OpMemGetDouble = ["OpMemGetDouble",35];
+format_abc_Operation.OpMemGetDouble.toString = $estr;
+format_abc_Operation.OpMemGetDouble.__enum__ = format_abc_Operation;
+format_abc_Operation.OpMemSet8 = ["OpMemSet8",36];
+format_abc_Operation.OpMemSet8.toString = $estr;
+format_abc_Operation.OpMemSet8.__enum__ = format_abc_Operation;
+format_abc_Operation.OpMemSet16 = ["OpMemSet16",37];
+format_abc_Operation.OpMemSet16.toString = $estr;
+format_abc_Operation.OpMemSet16.__enum__ = format_abc_Operation;
+format_abc_Operation.OpMemSet32 = ["OpMemSet32",38];
+format_abc_Operation.OpMemSet32.toString = $estr;
+format_abc_Operation.OpMemSet32.__enum__ = format_abc_Operation;
+format_abc_Operation.OpMemSetFloat = ["OpMemSetFloat",39];
+format_abc_Operation.OpMemSetFloat.toString = $estr;
+format_abc_Operation.OpMemSetFloat.__enum__ = format_abc_Operation;
+format_abc_Operation.OpMemSetDouble = ["OpMemSetDouble",40];
+format_abc_Operation.OpMemSetDouble.toString = $estr;
+format_abc_Operation.OpMemSetDouble.__enum__ = format_abc_Operation;
+format_abc_Operation.OpSign1 = ["OpSign1",41];
+format_abc_Operation.OpSign1.toString = $estr;
+format_abc_Operation.OpSign1.__enum__ = format_abc_Operation;
+format_abc_Operation.OpSign8 = ["OpSign8",42];
+format_abc_Operation.OpSign8.toString = $estr;
+format_abc_Operation.OpSign8.__enum__ = format_abc_Operation;
+format_abc_Operation.OpSign16 = ["OpSign16",43];
+format_abc_Operation.OpSign16.toString = $estr;
+format_abc_Operation.OpSign16.__enum__ = format_abc_Operation;
+format_abc_Operation.__empty_constructs__ = [format_abc_Operation.OpAs,format_abc_Operation.OpNeg,format_abc_Operation.OpIncr,format_abc_Operation.OpDecr,format_abc_Operation.OpNot,format_abc_Operation.OpBitNot,format_abc_Operation.OpAdd,format_abc_Operation.OpSub,format_abc_Operation.OpMul,format_abc_Operation.OpDiv,format_abc_Operation.OpMod,format_abc_Operation.OpShl,format_abc_Operation.OpShr,format_abc_Operation.OpUShr,format_abc_Operation.OpAnd,format_abc_Operation.OpOr,format_abc_Operation.OpXor,format_abc_Operation.OpEq,format_abc_Operation.OpPhysEq,format_abc_Operation.OpLt,format_abc_Operation.OpLte,format_abc_Operation.OpGt,format_abc_Operation.OpGte,format_abc_Operation.OpIs,format_abc_Operation.OpIn,format_abc_Operation.OpIIncr,format_abc_Operation.OpIDecr,format_abc_Operation.OpINeg,format_abc_Operation.OpIAdd,format_abc_Operation.OpISub,format_abc_Operation.OpIMul,format_abc_Operation.OpMemGet8,format_abc_Operation.OpMemGet16,format_abc_Operation.OpMemGet32,format_abc_Operation.OpMemGetFloat,format_abc_Operation.OpMemGetDouble,format_abc_Operation.OpMemSet8,format_abc_Operation.OpMemSet16,format_abc_Operation.OpMemSet32,format_abc_Operation.OpMemSetFloat,format_abc_Operation.OpMemSetDouble,format_abc_Operation.OpSign1,format_abc_Operation.OpSign8,format_abc_Operation.OpSign16];
 var format_gif_Block = $hxClasses["format.gif.Block"] = { __ename__ : true, __constructs__ : ["BFrame","BExtension","BEOF"] };
 format_gif_Block.BFrame = function(frame) { var $x = ["BFrame",0,frame]; $x.__enum__ = format_gif_Block; $x.toString = $estr; return $x; };
 format_gif_Block.BExtension = function(extension) { var $x = ["BExtension",1,extension]; $x.__enum__ = format_gif_Block; $x.toString = $estr; return $x; };
@@ -42532,6 +42954,100 @@ $hxClasses["invertotanks.BulletType"] = invertotanks_BulletType;
 invertotanks_BulletType.__name__ = ["invertotanks","BulletType"];
 invertotanks_BulletType.prototype = {
 	__class__: invertotanks_BulletType
+};
+var invertotanks_Controller = function(up,down,left,right,cycleLeft,cycleRight,forceUp,forceDown,fire,precise) {
+	this.key = [];
+	this.key.push(up);
+	this.key.push(down);
+	this.key.push(left);
+	this.key.push(right);
+	this.key.push(cycleLeft);
+	this.key.push(cycleRight);
+	this.key.push(forceUp);
+	this.key.push(forceDown);
+	this.key.push(fire);
+	this.key.push(precise);
+};
+$hxClasses["invertotanks.Controller"] = invertotanks_Controller;
+invertotanks_Controller.__name__ = ["invertotanks","Controller"];
+invertotanks_Controller.prototype = {
+	get: function(i) {
+		if(this.key[i] == null) {
+			return false;
+		}
+		return hxd_Key.isDown(this.key[i]);
+	}
+	,get_up: function() {
+		if(this.key[0] == null) {
+			return false;
+		} else {
+			return hxd_Key.isDown(this.key[0]);
+		}
+	}
+	,get_down: function() {
+		if(this.key[1] == null) {
+			return false;
+		} else {
+			return hxd_Key.isDown(this.key[1]);
+		}
+	}
+	,get_left: function() {
+		if(this.key[2] == null) {
+			return false;
+		} else {
+			return hxd_Key.isDown(this.key[2]);
+		}
+	}
+	,get_right: function() {
+		if(this.key[3] == null) {
+			return false;
+		} else {
+			return hxd_Key.isDown(this.key[3]);
+		}
+	}
+	,get_cycleRight: function() {
+		if(this.key[4] == null) {
+			return false;
+		} else {
+			return hxd_Key.isDown(this.key[4]);
+		}
+	}
+	,get_cycleLeft: function() {
+		if(this.key[5] == null) {
+			return false;
+		} else {
+			return hxd_Key.isDown(this.key[5]);
+		}
+	}
+	,get_forceUp: function() {
+		if(this.key[6] == null) {
+			return false;
+		} else {
+			return hxd_Key.isDown(this.key[6]);
+		}
+	}
+	,get_forceDown: function() {
+		if(this.key[7] == null) {
+			return false;
+		} else {
+			return hxd_Key.isDown(this.key[7]);
+		}
+	}
+	,get_fire: function() {
+		if(this.key[8] == null) {
+			return false;
+		} else {
+			return hxd_Key.isDown(this.key[8]);
+		}
+	}
+	,get_precise: function() {
+		if(this.key[9] == null) {
+			return false;
+		} else {
+			return hxd_Key.isDown(this.key[9]);
+		}
+	}
+	,__class__: invertotanks_Controller
 };
 var invertotanks_Main = function(engine) {
 	hxd_App.call(this,engine);

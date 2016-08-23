@@ -11,6 +11,7 @@ import hxd.Pixels;
 import hxd.Res;
 import hxd.res.Font;
 import js.html.Uint8ClampedArray;
+import hxd.Key;
 
 import js.Lib;
 
@@ -46,6 +47,7 @@ class Main extends App {
 		}else{
 			Main.dt = dt;
 		}
+		
 		world.update();
 		world.draw(g);
 	}
@@ -58,5 +60,4 @@ class Main extends App {
 		g.x = Std.int(s2d.width / 2)-320;
 		g.y = Std.int(s2d.height / 2)-240;
 	}
-	
 }
