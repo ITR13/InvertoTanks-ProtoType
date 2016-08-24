@@ -44,14 +44,21 @@ class Controller{
 		}
 		return Key.isDown(key[i]);
 	}
+
+	public inline function getP(i:Int):Bool {
+		if (key[i] == null){
+			return false;
+		}
+		return Key.isPressed(key[i]);
+	}
 	
 	function get_up(){return get(0); };
 	function get_down(){return get(1); };
 	function get_left(){return get(2); };
 	function get_right(){return get(3); };
 	
-	function get_cycleRight(){return get(4); };
-	function get_cycleLeft(){return get(5); };
+	function get_cycleRight(){return getP(4); };
+	function get_cycleLeft(){return getP(5); };
 	function get_forceUp(){return get(6); };
 	function get_forceDown(){return get(7); };
 	

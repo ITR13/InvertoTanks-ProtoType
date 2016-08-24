@@ -46,7 +46,7 @@ class World{
 		}
 	}
 
-	public function explode(x:Float, y:Float, r:Float, above, grow:Bool){
+	public function explode(x:Float, y:Float, r:Float, above:Bool, grow:Bool){
 		for (i in  Std.int(x - r)...Std.int(x + r)){
 			if (i >= 0 && i < heightMap.length){
 				var localR = Math.cos(Math.PI * (i - x) / (r*2))*r;
@@ -129,10 +129,10 @@ class World{
 		return {x:x, y:y, vx:vx, vy:vy, inverted:inverted};
 	}
 	
-	public function fire(force:Float, b:BulletType, tank:Tank){
+	public function fire(force:Float, degree:Float, b:BulletType, tank:Tank){
 		var x = Std.int(tank.x);
-		var dx = Math.cos(tank.degree);
-		var dy = -Math.sin(tank.degree);
+		var dx = Math.cos(degree);
+		var dy = -Math.sin(degree);
 		var height = tank.x-x;
 		height = height * heightMap[x] + (1 - height) * heightMap[x + 1];
 		bullets.push(new Bullet(tank.x + dx * tankSize * 1.5, height + dy * tankSize * 1.5, b.r, dx * force, 

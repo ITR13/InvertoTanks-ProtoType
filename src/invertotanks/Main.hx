@@ -33,9 +33,12 @@ class Main extends App {
 			heightMap.push(j);
 		}
 		
+		var controller = new Controller(Key.Up,Key.Down,Key.Left,Key.Right,Key.Space,Key.Space,Key.Space,
+	Key.Space,Key.Space,Key.Space,Key.Space,Key.Space,Key.U);
+
 		var tanks = new Array<Tank>();
-		tanks.push(new Tank(640 / 4, true, 100));
-		tanks.push(new Tank(3*640 / 4, false, 100));
+		tanks.push(new Tank(640 / 4, true, 100,controller));
+		tanks.push(new Tank(3*640 / 4, false, 100,null));
 		
 		world = new World(heightMap,tanks);
 		world.draw(g);

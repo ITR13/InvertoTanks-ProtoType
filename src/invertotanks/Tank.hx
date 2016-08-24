@@ -6,49 +6,107 @@ package invertotanks;
  */
 class Tank
 {
-	private static inline var vx = 0.1; 
-	private var controller:Controller;
+	private static inline var vx = 1.0; 
+	private static inline var vf = 0.5; 
+	private static inline var vd = Math.PI/32;
+	private static inline var sm = 0.1;
+	private static inline var sTime = 5.0;
+
+	private var c:Controller;
 	
 	public var x(default, null):Float;
 	public var above(default, null):Bool;
 	public var fuel(default, null):Float;
 	
 	public var degree(default, null):Float;
+	public var force(default, null):Float;
+	public var invertions(default, null):Int;
 
-	public function new(x:Float,above:Bool,fuel:Float){
+
+	public function new(x:Float,above:Bool,fuel:Float,controller:Controller){
 		this.x = x;
 		this.above = above;
 		this.fuel = fuel;
+		this.c = controller;
+
+		shotTimer = 0;
 		degree = above?( -Math.PI / 3):(2 * Math.PI / 3);
-		counter = 60 * 3;
-		counter2 = 0;
-		left = !above;
+		force = 50;
+		invertions = 1;
 	}
 
-	private var counter:Int;
-	private var counter2:Int;
-	private var left:Bool;
+	private var shotTimer:Float;
 	public function update(world:World){
-		move(left ?1/5 :-1/5);
-		degree += Math.PI / 365;
-		if (++counter >= 60 * 1.5){
-			counter = 0;
-			world.fire(Math.random() * 80 + 10, new BulletType(3, Math.random() * 16 + 16, 0, 0, false, counter2++), this);
-			counter2 = counter2 % 8;
+		shotTimer += Main.dt;
+		if(controller!=null){			
+			if(c.fire){	
+				if(shotTimer>=sTime){
+					shotTimer-=sTime;
+					if(shotTimer>=sTime/2){
+						shotTimer = 0;
+					}
+					world.fire(force, degree, new BulletType(3, 32, 0, 0, false, invertions), this);
+				}
+			}
+			if(c.left){
+				if(!c.right){			
+					move(c.precise?-vx*sm:-vx);
+				}
+			}else if(c.right){
+				move(c.precise?vx*sm:vx);
+			}
+
+			if(c.up){
+				if(!c.down){
+					moveDeg(precise?sm*vd:vd);
+				}
+			}else if(c.down){
+				moveDeg(precise?-sm*vd:-vd);
+			}
+
+			if(c.forceUp){
+				if(!f.forceDown){
+					moveForce(precise?sm*vf:vf);
+				}
+			}else if(f.forceDown){
+				moveForce(precise?-sm*vf:-vf);
+			}
+
+			if(c.cycleLeft){
+				invertions--;
+			}
+			if(c.cycleRight){
+				invertions++;
+			}
 		}
 	}
-	
-	
+		
 	public function move(vx:Float){
 		x -= Main.dt*vx;
 		if (x < 1){
 			x = 1;
-			left = false;
 		}else if(x>638){
 			x = 638;
-			left = true;
 		}else{
 			fuel -= Main.dt*vx/10;
+		}
+	}
+
+	public function moveDeg(vd:Float){
+		degree += vd*Main.dt;
+		if(degree<0){
+			degree += Math.Pi;
+		}if(degree>=2*Math.PI){
+			degree -= 2*Math.PI;
+		}
+	}
+
+	public function moveForce(vf:Float){
+		force += vf*Main.dt;
+		if(force<0){
+			force = 0;
+		}else if(force>100){
+			force = 100;
 		}
 	}
 }
