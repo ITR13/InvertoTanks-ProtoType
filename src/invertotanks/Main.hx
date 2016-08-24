@@ -24,21 +24,24 @@ class Main extends App {
 	var counter:Int;
 	override function init() {
 		g = new Graphics(s2d);
-		g.x = Std.int(s2d.width / 2)-320;
-		g.y = Std.int(s2d.height / 2)-240;
+		onResize();
 		
 		var heightMap = new Array<Float>();
 		for (i in 0...640){
-			var j = 160 - i / 2;
-			heightMap.push(j);
+			//var j = 160 - i / 2;
+			//heightMap.push(j);
+			heightMap.push(0);
 		}
 		
-		var controller = new Controller(Key.Up,Key.Down,Key.Left,Key.Right,Key.Space,Key.Space,Key.Space,
-	Key.Space,Key.Space,Key.Space,Key.Space,Key.Space,Key.U);
+		var p1 = new Controller(Key.W, Key.S, Key.A, Key.D,
+			Key.Q, Key.E, Key.R, Key.F, Key.SPACE, Key.SHIFT);
+
+		var p2 = new Controller(Key.UP, Key.DOWN, Key.LEFT, Key.RIGHT,
+			Key.U, Key.I, Key.J, Key.K, Key.L, Key.O);
 
 		var tanks = new Array<Tank>();
-		tanks.push(new Tank(640 / 4, true, 100,controller));
-		tanks.push(new Tank(3*640 / 4, false, 100,null));
+		tanks.push(new Tank(640 / 4, true, 100,p1));
+		tanks.push(new Tank(3*640 / 4, false, 100,p2));
 		
 		world = new World(heightMap,tanks);
 		world.draw(g);
@@ -60,7 +63,14 @@ class Main extends App {
 	}
 	
 	override function onResize() {
-		g.x = Std.int(s2d.width / 2)-320;
-		g.y = Std.int(s2d.height / 2)-240;
+		g.scaleX = s2d.width / 640;
+		g.scaleY = s2d.height / 480;
+		if (g.scaleX < g.scaleY){
+			g.scaleY = g.scaleX;
+		}else{
+			g.scaleX = g.scaleY;
+		}
+		g.x = Std.int(s2d.width / 2)-g.scaleX*320;
+		g.y = Std.int(s2d.height / 2) - g.scaleY*240;
 	}
 }

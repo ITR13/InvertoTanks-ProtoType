@@ -6,11 +6,11 @@ package invertotanks;
  */
 class Tank
 {
-	private static inline var vx = 1.0; 
+	private static inline var vx = 0.65; 
 	private static inline var vf = 0.5; 
-	private static inline var vd = Math.PI/32;
-	private static inline var sm = 0.1;
-	private static inline var sTime = 5.0;
+	private static inline var vd = 0.0981747704/3;
+	private static inline var pm = 0.5;
+	private static inline var sTime = 1.5;
 
 	private var c:Controller;
 	
@@ -37,39 +37,40 @@ class Tank
 
 	private var shotTimer:Float;
 	public function update(world:World){
-		shotTimer += Main.dt;
-		if(controller!=null){			
+		shotTimer += Main.dt/60;
+		if (c != null){
+			var precise = c.precise;
 			if(c.fire){	
 				if(shotTimer>=sTime){
 					shotTimer-=sTime;
 					if(shotTimer>=sTime/2){
 						shotTimer = 0;
 					}
-					world.fire(force, degree, new BulletType(3, 32, 0, 0, false, invertions), this);
+					world.fire(force, degree, new BulletType(3, 16, 24, 0, true, invertions), this);
 				}
 			}
 			if(c.left){
 				if(!c.right){			
-					move(c.precise?-vx*sm:-vx);
+					move(precise?-vx*pm:-vx);
 				}
 			}else if(c.right){
-				move(c.precise?vx*sm:vx);
+				move(precise?vx*pm:vx);
 			}
 
 			if(c.up){
 				if(!c.down){
-					moveDeg(precise?sm*vd:vd);
+					moveDeg(precise?pm*vd:vd);
 				}
 			}else if(c.down){
-				moveDeg(precise?-sm*vd:-vd);
+				moveDeg(precise?-pm*vd:-vd);
 			}
 
 			if(c.forceUp){
-				if(!f.forceDown){
-					moveForce(precise?sm*vf:vf);
+				if(!c.forceDown){
+					moveForce(precise?pm*vf:vf);
 				}
-			}else if(f.forceDown){
-				moveForce(precise?-sm*vf:-vf);
+			}else if(c.forceDown){
+				moveForce(precise?-pm*vf:-vf);
 			}
 
 			if(c.cycleLeft){
@@ -82,7 +83,7 @@ class Tank
 	}
 		
 	public function move(vx:Float){
-		x -= Main.dt*vx;
+		x += Main.dt*vx;
 		if (x < 1){
 			x = 1;
 		}else if(x>638){
@@ -95,7 +96,7 @@ class Tank
 	public function moveDeg(vd:Float){
 		degree += vd*Main.dt;
 		if(degree<0){
-			degree += Math.Pi;
+			degree += 2*Math.PI;
 		}if(degree>=2*Math.PI){
 			degree -= 2*Math.PI;
 		}
@@ -107,6 +108,15 @@ class Tank
 			force = 0;
 		}else if(force>100){
 			force = 100;
+		}
+	}
+	
+	public function moveInvertions(dir:Int){
+		invertions += dir;
+		if (invertions < 0){
+			invertions = 0;
+		}else if (invertions > 5){
+			invertions = 5;
 		}
 	}
 }

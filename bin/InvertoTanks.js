@@ -42938,7 +42938,8 @@ invertotanks_Bullet.prototype = {
 		return false;
 	}
 	,explode: function(world) {
-		world.explode(this.x,this.y,this.modRadius,this.above,this.builder);
+		world.physExplode(this.x,this.y,this.modRadius,this.above,this.builder);
+		world.gExplode(new invertotanks_Explosion(this.x,this.y,this.modRadius,this.damageRadius));
 	}
 	,__class__: invertotanks_Bullet
 };
@@ -42977,6 +42978,12 @@ invertotanks_Controller.prototype = {
 		}
 		return hxd_Key.isDown(this.key[i]);
 	}
+	,getP: function(i) {
+		if(this.key[i] == null) {
+			return false;
+		}
+		return hxd_Key.isPressed(this.key[i]);
+	}
 	,get_up: function() {
 		if(this.key[0] == null) {
 			return false;
@@ -43009,14 +43016,14 @@ invertotanks_Controller.prototype = {
 		if(this.key[4] == null) {
 			return false;
 		} else {
-			return hxd_Key.isDown(this.key[4]);
+			return hxd_Key.isPressed(this.key[4]);
 		}
 	}
 	,get_cycleLeft: function() {
 		if(this.key[5] == null) {
 			return false;
 		} else {
-			return hxd_Key.isDown(this.key[5]);
+			return hxd_Key.isPressed(this.key[5]);
 		}
 	}
 	,get_forceUp: function() {
@@ -43049,6 +43056,44 @@ invertotanks_Controller.prototype = {
 	}
 	,__class__: invertotanks_Controller
 };
+var invertotanks_Explosion = function(x,y,rMax,r2Max,rSpeed,hollow) {
+	if(hollow == null) {
+		hollow = false;
+	}
+	if(rSpeed == null) {
+		rSpeed = 60;
+	}
+	this.x = x;
+	this.y = y;
+	this.rMax = rMax;
+	this.r2Max = r2Max;
+	this.rSpeed = rSpeed;
+	this.hollow = hollow;
+	this.r = 0;
+	this.r2 = 0;
+	this.a = 1;
+};
+$hxClasses["invertotanks.Explosion"] = invertotanks_Explosion;
+invertotanks_Explosion.__name__ = ["invertotanks","Explosion"];
+invertotanks_Explosion.prototype = {
+	update: function() {
+		this.r += this.rSpeed * invertotanks_Main.dt / 60;
+		this.r2 += this.rSpeed * invertotanks_Main.dt / 60;
+		if(this.r > this.rMax) {
+			if(this.r2 > this.r2Max) {
+				this.a -= 0.1 * invertotanks_Main.dt;
+				if(this.a <= 0) {
+					return true;
+				}
+			}
+			this.r = this.rMax;
+		} else if(this.r2 > this.r2Max) {
+			this.r2 = this.r2Max;
+		}
+		return false;
+	}
+	,__class__: invertotanks_Explosion
+};
 var invertotanks_Main = function(engine) {
 	hxd_App.call(this,engine);
 };
@@ -43061,20 +43106,18 @@ invertotanks_Main.__super__ = hxd_App;
 invertotanks_Main.prototype = $extend(hxd_App.prototype,{
 	init: function() {
 		this.g = new h2d_Graphics(this.s2d);
-		var _this = this.g;
-		var v = (this.s2d.width / 2 | 0) - 320;
-		_this.posChanged = true;
-		_this.x = v;
-		var _this1 = this.g;
-		var v1 = (this.s2d.height / 2 | 0) - 240;
-		_this1.posChanged = true;
-		_this1.y = v1;
+		this.onResize();
 		var heightMap = [];
 		var _g = 0;
-		while(_g < 640) heightMap.push(160 - _g++ / 2);
+		while(_g < 640) {
+			++_g;
+			heightMap.push(0);
+		}
+		var p1 = new invertotanks_Controller(87,83,65,68,81,69,82,70,32,16);
+		var p2 = new invertotanks_Controller(38,40,37,39,85,73,74,75,76,79);
 		var tanks = [];
-		tanks.push(new invertotanks_Tank(160.,true,100));
-		tanks.push(new invertotanks_Tank(480.,false,100));
+		tanks.push(new invertotanks_Tank(160.,true,100,p1));
+		tanks.push(new invertotanks_Tank(480.,false,100,p2));
 		this.world = new invertotanks_World(heightMap,tanks);
 		this.world.draw(this.g);
 	}
@@ -43089,47 +43132,123 @@ invertotanks_Main.prototype = $extend(hxd_App.prototype,{
 	}
 	,onResize: function() {
 		var _this = this.g;
-		var v = (this.s2d.width / 2 | 0) - 320;
+		var v = this.s2d.width / 640;
 		_this.posChanged = true;
-		_this.x = v;
+		_this.scaleX = v;
 		var _this1 = this.g;
-		var v1 = (this.s2d.height / 2 | 0) - 240;
+		var v1 = this.s2d.height / 480;
 		_this1.posChanged = true;
-		_this1.y = v1;
+		_this1.scaleY = v1;
+		if(this.g.scaleX < this.g.scaleY) {
+			var _this2 = this.g;
+			var v2 = this.g.scaleX;
+			_this2.posChanged = true;
+			_this2.scaleY = v2;
+		} else {
+			var _this3 = this.g;
+			var v3 = this.g.scaleY;
+			_this3.posChanged = true;
+			_this3.scaleX = v3;
+		}
+		var _this4 = this.g;
+		var v4 = (this.s2d.width / 2 | 0) - this.g.scaleX * 320;
+		_this4.posChanged = true;
+		_this4.x = v4;
+		var _this5 = this.g;
+		var v5 = (this.s2d.height / 2 | 0) - this.g.scaleY * 240;
+		_this5.posChanged = true;
+		_this5.y = v5;
 	}
 	,__class__: invertotanks_Main
 });
-var invertotanks_Tank = function(x,above,fuel) {
+var invertotanks_Tank = function(x,above,fuel,controller) {
 	this.x = x;
 	this.above = above;
 	this.fuel = fuel;
+	this.c = controller;
+	this.shotTimer = 0;
 	this.degree = above?-Math.PI / 3:2 * Math.PI / 3;
-	this.counter = 180;
-	this.counter2 = 0;
-	this.left = !above;
+	this.force = 50;
+	this.invertions = 1;
 };
 $hxClasses["invertotanks.Tank"] = invertotanks_Tank;
 invertotanks_Tank.__name__ = ["invertotanks","Tank"];
 invertotanks_Tank.prototype = {
 	update: function(world) {
-		this.move(this.left?0.2:-0.2);
-		this.degree += Math.PI / 365;
-		if(++this.counter >= 90.) {
-			this.counter = 0;
-			world.fire(Math.random() * 80 + 10,new invertotanks_BulletType(3,Math.random() * 16 + 16,0,0,false,this.counter2++),this);
-			this.counter2 = this.counter2 % 8;
+		this.shotTimer += invertotanks_Main.dt / 60;
+		if(this.c != null) {
+			var precise = this.c.get_precise();
+			if(this.c.get_fire()) {
+				if(this.shotTimer >= 1.5) {
+					this.shotTimer -= 1.5;
+					if(this.shotTimer >= 0.75) {
+						this.shotTimer = 0;
+					}
+					world.fire(this.force,this.degree,new invertotanks_BulletType(3,16,24,0,true,this.invertions),this);
+				}
+			}
+			if(this.c.get_left()) {
+				if(!this.c.get_right()) {
+					this.move(precise?-0.325:-0.65);
+				}
+			} else if(this.c.get_right()) {
+				this.move(precise?0.325:0.65);
+			}
+			if(this.c.get_up()) {
+				if(!this.c.get_down()) {
+					this.moveDeg(precise?0.016362461733333333:0.032724923466666667);
+				}
+			} else if(this.c.get_down()) {
+				this.moveDeg(precise?-0.016362461733333333:-0.032724923466666667);
+			}
+			if(this.c.get_forceUp()) {
+				if(!this.c.get_forceDown()) {
+					this.moveForce(precise?0.25:0.5);
+				}
+			} else if(this.c.get_forceDown()) {
+				this.moveForce(precise?-0.25:-0.5);
+			}
+			if(this.c.get_cycleLeft()) {
+				this.invertions--;
+			}
+			if(this.c.get_cycleRight()) {
+				this.invertions++;
+			}
 		}
 	}
 	,move: function(vx) {
-		this.x -= invertotanks_Main.dt * vx;
+		this.x += invertotanks_Main.dt * vx;
 		if(this.x < 1) {
 			this.x = 1;
-			this.left = false;
 		} else if(this.x > 638) {
 			this.x = 638;
-			this.left = true;
 		} else {
 			this.fuel -= invertotanks_Main.dt * vx / 10;
+		}
+	}
+	,moveDeg: function(vd) {
+		this.degree += vd * invertotanks_Main.dt;
+		if(this.degree < 0) {
+			this.degree += 2 * Math.PI;
+		}
+		if(this.degree >= 2 * Math.PI) {
+			this.degree -= 2 * Math.PI;
+		}
+	}
+	,moveForce: function(vf) {
+		this.force += vf * invertotanks_Main.dt;
+		if(this.force < 0) {
+			this.force = 0;
+		} else if(this.force > 100) {
+			this.force = 100;
+		}
+	}
+	,moveInvertions: function(dir) {
+		this.invertions += dir;
+		if(this.invertions < 0) {
+			this.invertions = 0;
+		} else if(this.invertions > 5) {
+			this.invertions = 5;
 		}
 	}
 	,__class__: invertotanks_Tank
@@ -43138,6 +43257,7 @@ var invertotanks_World = function(heightMap,tanks) {
 	this.heightMap = heightMap;
 	this.tanks = tanks;
 	this.bullets = [];
+	this.explosions = [];
 	this.airResistance = 0.05;
 	this.gravity = 20;
 	this.wind = 0;
@@ -43148,29 +43268,39 @@ invertotanks_World.__name__ = ["invertotanks","World"];
 invertotanks_World.prototype = {
 	update: function() {
 		var _g = 0;
-		var _g1 = this.bullets;
+		var _g1 = this.explosions;
 		while(_g < _g1.length) {
-			var bullet = _g1[_g];
+			var explosion = _g1[_g];
 			++_g;
+			if(explosion.update()) {
+				HxOverrides.remove(this.explosions,explosion);
+			}
+		}
+		var _g2 = 0;
+		var _g11 = this.bullets;
+		while(_g2 < _g11.length) {
+			var bullet = _g11[_g2];
+			++_g2;
 			if(bullet.update(this)) {
 				HxOverrides.remove(this.bullets,bullet);
 			}
 		}
-		var _g2 = 0;
-		var _g11 = this.tanks;
-		while(_g2 < _g11.length) {
-			var tank = _g11[_g2];
-			++_g2;
+		var _g3 = 0;
+		var _g12 = this.tanks;
+		while(_g3 < _g12.length) {
+			var tank = _g12[_g3];
+			++_g3;
 			tank.update(this);
 		}
 	}
-	,explode: function(x,y,r,above,grow) {
+	,physExplode: function(x,y,r,above,grow) {
+		var j = 0.0;
 		var _g1 = x - r | 0;
 		var _g = x + r | 0;
 		while(_g1 < _g) {
 			var i = _g1++;
 			if(i >= 0 && i < this.heightMap.length) {
-				var localR = Math.cos(Math.PI * (i - x) / (r * 2)) * r;
+				var localR = Math.sin(Math.PI * j++ / (r * 2)) * r;
 				var height = above?this.heightMap[i] - (y - localR):y + localR - this.heightMap[i];
 				if(height > 0) {
 					if(height > localR) {
@@ -43185,6 +43315,9 @@ invertotanks_World.prototype = {
 				}
 			}
 		}
+	}
+	,gExplode: function(explosion) {
+		this.explosions.push(explosion);
 	}
 	,travel: function(x,y,vx,vy,above) {
 		var xInt = x | 0;
@@ -43238,10 +43371,10 @@ invertotanks_World.prototype = {
 		vy -= vy * (invertotanks_Main.dt * this.airResistance / 60);
 		return { x : x, y : y, vx : vx, vy : vy, inverted : inverted};
 	}
-	,fire: function(force,b,tank) {
+	,fire: function(force,degree,b,tank) {
 		var x = tank.x | 0;
-		var dx = Math.cos(tank.degree);
-		var dy = -Math.sin(tank.degree);
+		var dx = Math.cos(degree);
+		var dy = -Math.sin(degree);
 		var height = tank.x - x;
 		height = height * this.heightMap[x] + (1 - height) * this.heightMap[x + 1];
 		this.bullets.push(new invertotanks_Bullet(tank.x + dx * 8.5 * 1.5,height + dy * 8.5 * 1.5,b.r,dx * force,dy * force,b.modRadius,b.damageRadius,b.damage,b.builder,b.inverse,tank.above,tank));
@@ -43262,7 +43395,6 @@ invertotanks_World.prototype = {
 			var x1 = _g1++;
 			g.drawRect(x1,239 - this.heightMap[x1],1,3);
 		}
-		g.beginFill(65280);
 		var _g2 = 0;
 		var _g11 = this.tanks;
 		while(_g2 < _g11.length) {
@@ -43276,6 +43408,12 @@ invertotanks_World.prototype = {
 			var height = tank.x - x2;
 			height = (1 - height) * this.heightMap[x2] + height * this.heightMap[x2 + 1];
 			height = 240 - height;
+			g.curA = 0.5;
+			g.curR = 1.;
+			g.curG = 1.;
+			g.curB = 0.;
+			g.drawPie(tank.x,height,12.75 + tank.force / 2,tank.degree - Math.PI / 16,Math.PI / 8);
+			g.beginFill(65280);
 			g.drawPie(tank.x,height,8.5,deg,Math.PI);
 			g.drawPie(tank.x,height,12.75,tank.degree - Math.PI / 16,Math.PI / 8);
 		}
@@ -43288,6 +43426,22 @@ invertotanks_World.prototype = {
 			g.drawCircle(bullet.x,240 - bullet.y,bullet.r);
 			g.beginFill(16777215);
 			g.drawCircle(bullet.x,240 - bullet.y,bullet.r - 1);
+		}
+		var _g4 = 0;
+		var _g13 = this.explosions;
+		while(_g4 < _g13.length) {
+			var explosion = _g13[_g4];
+			++_g4;
+			g.curA = explosion.a * 0.3;
+			g.curR = 1.;
+			g.curG = 0.;
+			g.curB = 0.;
+			g.drawCircle(explosion.x,240 - explosion.y,explosion.r2);
+			g.curA = explosion.a * 0.7;
+			g.curR = 1.;
+			g.curG = 1.;
+			g.curB = 1.;
+			g.drawCircle(explosion.x,240 - explosion.y,explosion.r);
 		}
 	}
 	,__class__: invertotanks_World
@@ -44057,7 +44211,11 @@ hxsl_GlslOut.GLOBALS = (function($this) {
 hxsl_GlslOut.MAT34 = "struct _mat3x4 { vec4 a; vec4 b; vec4 c; };";
 hxsl_Printer.SWIZ = ["x","y","z","w"];
 hxsl_RuntimeShader.UID = 0;
-invertotanks_Tank.vx = 0.1;
+invertotanks_Tank.vx = 0.65;
+invertotanks_Tank.vf = 0.5;
+invertotanks_Tank.vd = 0.032724923466666667;
+invertotanks_Tank.pm = 0.5;
+invertotanks_Tank.sTime = 1.5;
 invertotanks_World.tankSize = 8.5;
 js_html_compat_Float32Array.BYTES_PER_ELEMENT = 4;
 js_html_compat_Uint8Array.BYTES_PER_ELEMENT = 1;

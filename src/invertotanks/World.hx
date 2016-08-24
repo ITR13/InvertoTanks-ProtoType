@@ -21,12 +21,14 @@ class World{
 	var tanks:Array<Tank>;
 
 	var bullets:Array<Bullet>;
+	var explosions:Array<Explosion>;
 	
 	public function new(heightMap:Array<Float>, tanks:Array<Tank>){
 		this.heightMap = heightMap;
 		this.tanks = tanks;
 		
 		bullets = new Array();
+		explosions = new Array();
 		
 		airResistance = 0.05;
 		gravity = 20;
@@ -36,6 +38,11 @@ class World{
 	}
 	
 	public function update(){
+		for (explosion in explosions){
+			if (explosion.update()){
+				explosions.remove(explosion);
+			}
+		}
 		for (bullet in bullets){
 			if (bullet.update(this)){
 				bullets.remove(bullet);
@@ -46,10 +53,11 @@ class World{
 		}
 	}
 
-	public function explode(x:Float, y:Float, r:Float, above:Bool, grow:Bool){
+	public function physExplode(x:Float, y:Float, r:Float, above:Bool, grow:Bool){
+		var j = 0.0;
 		for (i in  Std.int(x - r)...Std.int(x + r)){
 			if (i >= 0 && i < heightMap.length){
-				var localR = Math.cos(Math.PI * (i - x) / (r*2))*r;
+				var localR = Math.sin(Math.PI * (j++) / (r*2))*r;
 				var height = above?heightMap[i] - (y - localR):(y + localR) - heightMap[i];
 				if (height > 0){
 					if (height > localR){
@@ -64,6 +72,10 @@ class World{
 				}
 			}
 		}
+	}
+	
+	public function gExplode(explosion:Explosion){
+		explosions.push(explosion);
 	}
 	
 	public function travel(x:Float,y:Float,vx:Float,vy:Float,above:Bool){
@@ -153,7 +165,6 @@ class World{
 			g.drawRect(x, 239 - heightMap[x],1,3);
 		}
 		
-		g.beginFill(0x00FF00);
 		for (tank in tanks){
 			var x = Std.int(tank.x);
 			var deg = Math.atan2(heightMap[x - 1] - heightMap[x + 1], 2);
@@ -162,6 +173,9 @@ class World{
 			height = (1-height) * heightMap[x] + height * heightMap[x + 1];
 			height = 240 - height;
 			
+			g.setColor(0xFFFF00, 0.5);
+			g.drawPie(tank.x, height, tankSize * 1.5+tank.force/2, tank.degree-Math.PI/16, Math.PI/8);
+			g.beginFill(0x00FF00);
 			g.drawPie(tank.x, height, tankSize, deg, Math.PI);
 			g.drawPie(tank.x, height, tankSize * 1.5, tank.degree-Math.PI/16, Math.PI/8);
 		}
@@ -173,7 +187,12 @@ class World{
 			g.drawCircle(bullet.x, 240-bullet.y, bullet.r-1);
 		}
 		
-
+		for (explosion in explosions){
+			g.setColor(0xFF0000,explosion.a*0.3);
+			g.drawCircle(explosion.x, 240-explosion.y, explosion.r2);
+			g.setColor(0xFFFFFF,explosion.a*0.7);
+			g.drawCircle(explosion.x, 240-explosion.y, explosion.r);
+		}
 	}
 
 }

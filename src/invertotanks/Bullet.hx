@@ -1,4 +1,5 @@
 package invertotanks;
+import format.gif.Data.Extension;
 
 /**
  * ...
@@ -51,6 +52,7 @@ class Bullet{
 	}
 	
 	private function explode(world:World){
-		world.explode(x,y,modRadius,above,builder);		
+		world.physExplode(x, y, modRadius, above, builder);
+		world.gExplode(new Explosion(x, y, modRadius, damageRadius));
 	}
 }
