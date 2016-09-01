@@ -11,6 +11,7 @@ class Tank
 	private static inline var vd = 0.0981747704/3;
 	private static inline var pm = 0.5;
 	private static inline var sTime = 1.5;
+	private static inline var maxHeightDist = 3;
 
 	private var c:Controller;
 	
@@ -46,7 +47,7 @@ class Tank
 					if(shotTimer>=sTime/2){
 						shotTimer = 0;
 					}
-					world.fire(force, degree, new BulletType(3, 16, 24, 0, true, invertions), this);
+					world.fire(force, degree, new BulletType(3, 16, 24, 0, false, invertions), this);
 				}
 			}
 			if(c.left){
@@ -82,7 +83,7 @@ class Tank
 		}
 	}
 		
-	public function move(vx:Float){
+	public function move(vx:Float){		
 		x += Main.dt*vx;
 		if (x < 1){
 			x = 1;

@@ -54,10 +54,12 @@ class World{
 	}
 
 	public function physExplode(x:Float, y:Float, r:Float, above:Bool, grow:Bool){
-		var j = 0.0;
+		var j = -r;
+		var r2 = r * r;
 		for (i in  Std.int(x - r)...Std.int(x + r)){
 			if (i >= 0 && i < heightMap.length){
-				var localR = Math.sin(Math.PI * (j++) / (r*2))*r;
+				var localR = Math.sqrt(r2 - j * j);
+				j++;
 				var height = above?heightMap[i] - (y - localR):(y + localR) - heightMap[i];
 				if (height > 0){
 					if (height > localR){

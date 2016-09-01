@@ -43184,7 +43184,7 @@ invertotanks_Tank.prototype = {
 					if(this.shotTimer >= 0.75) {
 						this.shotTimer = 0;
 					}
-					world.fire(this.force,this.degree,new invertotanks_BulletType(3,16,24,0,true,this.invertions),this);
+					world.fire(this.force,this.degree,new invertotanks_BulletType(3,16,24,0,false,this.invertions),this);
 				}
 			}
 			if(this.c.get_left()) {
@@ -43294,13 +43294,15 @@ invertotanks_World.prototype = {
 		}
 	}
 	,physExplode: function(x,y,r,above,grow) {
-		var j = 0.0;
+		var j = -r;
+		var r2 = r * r;
 		var _g1 = x - r | 0;
 		var _g = x + r | 0;
 		while(_g1 < _g) {
 			var i = _g1++;
 			if(i >= 0 && i < this.heightMap.length) {
-				var localR = Math.sin(Math.PI * j++ / (r * 2)) * r;
+				var localR = Math.sqrt(r2 - j * j);
+				++j;
 				var height = above?this.heightMap[i] - (y - localR):y + localR - this.heightMap[i];
 				if(height > 0) {
 					if(height > localR) {
