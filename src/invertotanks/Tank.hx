@@ -1,5 +1,9 @@
 package invertotanks;
 
+import h2d.Anim;
+import h2d.Text;
+import hxd.Res;
+import hxd.res.DynamicText;
 /**
  * ...
  * @author ITR
@@ -12,6 +16,7 @@ class Tank
 	private static inline var pm = 0.5;
 	private static inline var sTime = 1.5;
 	private static inline var maxHeightDist = 3;
+	private static inline var maxHealth = 100.0;
 
 	private var c:Controller;
 	
@@ -23,6 +28,8 @@ class Tank
 	public var force(default, null):Float;
 	public var invertions(default, null):Int;
 
+	public var health(default, null):Float;
+	public var invertionsText(default, null):Text;
 
 	public function new(x:Float,above:Bool,fuel:Float,controller:Controller){
 		this.x = x;
@@ -33,7 +40,10 @@ class Tank
 		shotTimer = 0;
 		degree = above?( -Math.PI / 3):(2 * Math.PI / 3);
 		force = 50;
-		invertions = 1;
+		invertions = 0;
+		health = maxHealth;
+		
+		invertionsText = Main.makeText(Std.string(invertions));
 	}
 
 	private var shotTimer:Float;
@@ -41,7 +51,7 @@ class Tank
 		shotTimer += Main.dt/60;
 		if (c != null){
 			var precise = c.precise;
-			if(c.fire){	
+			if(c.fire){
 				if(shotTimer>=sTime){
 					shotTimer-=sTime;
 					if(shotTimer>=sTime/2){
@@ -74,11 +84,11 @@ class Tank
 				moveForce(precise?-pm*vf:-vf);
 			}
 
-			if(c.cycleLeft){
-				invertions--;
+			if (c.cycleLeft){
+				moveInvertions(1);
 			}
 			if(c.cycleRight){
-				invertions++;
+				moveInvertions(-1);
 			}
 		}
 	}
@@ -119,5 +129,15 @@ class Tank
 		}else if (invertions > 5){
 			invertions = 5;
 		}
+		invertionsText.text = Std.string(invertions);
+	}
+
+	public function damage(d:Float){
+		health -= d;
+		if (health <= 0){
+			health = 0;
+			return true;
+		}
+		return false;
 	}
 }

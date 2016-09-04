@@ -1,4 +1,5 @@
 package invertotanks;
+import format.agal.Data.Tex;
 import h2d.Anim;
 import h2d.Bitmap;
 import h2d.Graphics;
@@ -19,13 +20,20 @@ import hxd.App;
 class Main extends App {	
 	var world:World;
 	var g:Graphics;
+	var font:h2d.Font;
 	public static var dt(default, null):Float;
+	
+	static var instance:Main;
 	
 	var counter:Int;
 	override function init() {
 		g = new Graphics(s2d);
 		onResize();
 		
+		Res.initEmbed();
+		
+		font = Res.TITUSCBZ.build(16);
+				
 		var heightMap = new Array<Float>();
 		for (i in 0...640){
 			//var j = 160 - i / 2;
@@ -59,7 +67,7 @@ class Main extends App {
 	}
 	
 	static function main() {
-		new Main();
+		instance = new Main();
 	}
 	
 	override function onResize() {
@@ -73,4 +81,19 @@ class Main extends App {
 		g.x = Std.int(s2d.width / 2)-g.scaleX*320;
 		g.y = Std.int(s2d.height / 2) - g.scaleY*240;
 	}
+
+	public static function makeText(text:String):Text{
+		return instance.makeTextI(text);
+	}
+	
+	function makeTextI(text:String):Text{
+		var ret = new Text(font, s2d);
+		ret.text = text;
+		ret.scaleX = 0.7;
+		ret.scaleY = 0.7;
+		ret.textColor = 0;
+		g.addChild(ret);
+		return ret;
+	}
+	
 }

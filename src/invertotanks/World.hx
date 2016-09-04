@@ -11,6 +11,8 @@ import haxe.macro.Format;
  */
 class World{
 	private static inline var tankSize:Float = 8.5;
+	private static inline var healthHeight:Float = tankSize+8;
+	
 	
 	var airResistance:Float;
 	var gravity:Float;
@@ -62,10 +64,10 @@ class World{
 				j++;
 				var height = above?heightMap[i] - (y - localR):(y + localR) - heightMap[i];
 				if (height > 0){
-					if (height > localR){
-						height = localR;
+					if (height > localR*2){
+						height = localR*2;
 					}
-					heightMap[i] += above==grow? -height:height;
+					heightMap[i] += above!=grow? -height:height;
 					if (heightMap[i] < -240){
 						heightMap[i] = -240;
 					}else if (heightMap[i] > 240){
@@ -78,6 +80,16 @@ class World{
 	
 	public function gExplode(explosion:Explosion){
 		explosions.push(explosion);
+	}
+	
+	public function dExplode(x:Float, y:Float, r:Float, d:Float, origin:Tank){
+		for (tank in tanks){
+			var dx = tank.x - x;
+			var dy = getHeight(tank) - y;
+			if ((dx * dx + dy * dy) <= r*r){
+				tank.damage(d);
+			}
+		}
 	}
 	
 	public function travel(x:Float,y:Float,vx:Float,vy:Float,above:Bool){
@@ -144,13 +156,19 @@ class World{
 	}
 	
 	public function fire(force:Float, degree:Float, b:BulletType, tank:Tank){
-		var x = Std.int(tank.x);
 		var dx = Math.cos(degree);
 		var dy = -Math.sin(degree);
-		var height = tank.x-x;
-		height = height * heightMap[x] + (1 - height) * heightMap[x + 1];
+		var height = getHeight(tank);
+		
 		bullets.push(new Bullet(tank.x + dx * tankSize * 1.5, height + dy * tankSize * 1.5, b.r, dx * force, 
 			dy * force, b.modRadius, b.damageRadius,b.damage, b.builder, b.inverse, tank.above, tank));
+	}
+
+	private function getHeight(tank:Tank){
+		var x = Std.int(tank.x);
+		var height = tank.x-x;
+		height = (1 - height) * heightMap[x] + height * heightMap[x + 1];
+		return height;
 	}
 	
 	public function draw(g:Graphics){
@@ -171,15 +189,21 @@ class World{
 			var x = Std.int(tank.x);
 			var deg = Math.atan2(heightMap[x - 1] - heightMap[x + 1], 2);
 			if (tank.above){deg += Math.PI; }
-			var height = tank.x-x;
-			height = (1-height) * heightMap[x] + height * heightMap[x + 1];
-			height = 240 - height;
-			
+			var height = 240 - getHeight(tank);
+		
 			g.setColor(0xFFFF00, 0.5);
 			g.drawPie(tank.x, height, tankSize * 1.5+tank.force/2, tank.degree-Math.PI/16, Math.PI/8);
-			g.beginFill(0x00FF00);
+			g.beginFill(0x007700);
 			g.drawPie(tank.x, height, tankSize, deg, Math.PI);
-			g.drawPie(tank.x, height, tankSize * 1.5, tank.degree-Math.PI/16, Math.PI/8);
+			g.drawPie(tank.x, height, tankSize * 1.5, tank.degree-Math.PI / 16, Math.PI / 8);
+
+			g.beginFill(0x000000);
+			g.drawRect(tank.x - tankSize-1, height + (tank.above?-healthHeight-3:healthHeight)-1, 2*tankSize+2,6);
+			g.beginFill(0x00FF00);
+			g.drawRect(tank.x - tankSize, height + (tank.above? -healthHeight - 3:healthHeight), tank.health * tankSize / 50, 4);
+
+			tank.invertionsText.x = tank.x-(tank.above?2:3);
+			tank.invertionsText.y = height-(tank.above?14:5);
 		}
 		
 		for (bullet in bullets){

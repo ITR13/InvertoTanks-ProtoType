@@ -19,6 +19,7 @@ class Bullet{
 	
 	var inverse:Int;
 	var above:Bool;
+	var originallyAbove:Bool;
 	
 	var origin:Tank;
 	
@@ -32,6 +33,7 @@ class Bullet{
 		this.builder = builder;
 		this.inverse = inverse;
 		this.above = above;
+		this.originallyAbove = above;
 		this.origin = origin;
 	}
 	
@@ -52,7 +54,8 @@ class Bullet{
 	}
 	
 	private function explode(world:World){
-		world.physExplode(x, y, modRadius, above, builder);
+		world.dExplode(x, y, damageRadius, damageRadius, origin);
+		world.physExplode(x, y, modRadius, originallyAbove, builder);
 		world.gExplode(new Explosion(x, y, modRadius, damageRadius));
 	}
 }
