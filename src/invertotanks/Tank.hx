@@ -15,8 +15,8 @@ class Tank
 	private static inline var vd = 0.0981747704/3;
 	private static inline var pm = 0.5;
 	private static inline var sTime = 1.5;
-	private static inline var maxHeightDist = 3;
 	private static inline var maxHealth = 100.0;
+	private static inline var maxFuel = 40.0;
 
 	private var c:Controller;
 	
@@ -31,41 +31,40 @@ class Tank
 	public var health(default, null):Float;
 	public var invertionsText(default, null):Text;
 
-	public function new(x:Float,above:Bool,fuel:Float,controller:Controller){
+	public function new(x:Float,above:Bool,controller:Controller){
 		this.x = x;
 		this.above = above;
-		this.fuel = fuel;
 		this.c = controller;
 
-		shotTimer = 0;
 		degree = above?( -Math.PI / 3):(2 * Math.PI / 3);
 		force = 50;
 		invertions = 0;
 		health = maxHealth;
+		fuel = maxFuel/2;
 		
 		invertionsText = Main.makeText(Std.string(invertions));
 	}
 
-	private var shotTimer:Float;
-	public function update(world:World){
-		shotTimer += Main.dt/60;
+	public function turnEnd(){
+		fuel += maxFuel/20;
+		if (fuel > maxFuel){
+			fuel = maxFuel;
+		}
+	}
+	
+	public function update(world:World):Bool{
 		if (c != null){
 			var precise = c.precise;
 			if(c.fire){
-				if(shotTimer>=sTime){
-					shotTimer-=sTime;
-					if(shotTimer>=sTime/2){
-						shotTimer = 0;
-					}
-					world.fire(force, degree, new BulletType(3, 16, 24, 0, false, invertions), this);
-				}
+				world.fire(force, degree, new BulletType(3, 8, 12, 20, false, invertions), this);
+				return true;
 			}
 			if(c.left){
 				if(!c.right){			
-					move(precise?-vx*pm:-vx);
+					move(precise?-vx*pm:-vx,world);
 				}
 			}else if(c.right){
-				move(precise?vx*pm:vx);
+				move(precise?vx*pm:vx,world);
 			}
 
 			if(c.up){
@@ -91,16 +90,23 @@ class Tank
 				moveInvertions(-1);
 			}
 		}
+		return false;
 	}
 		
-	public function move(vx:Float){		
+	public function move(vx:Float,world:World){
+		if (vx == 0||fuel<=0){
+			return;
+		}
+		if (!world.canMove(x, vx > 0,above)){
+			return;
+		}
 		x += Main.dt*vx;
 		if (x < 1){
 			x = 1;
 		}else if(x>638){
 			x = 638;
 		}else{
-			fuel -= Main.dt*vx/10;
+			fuel -= Math.abs(Main.dt*vx/10);
 		}
 	}
 

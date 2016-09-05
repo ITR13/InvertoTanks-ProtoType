@@ -35,21 +35,28 @@ class Main extends App {
 		font = Res.TITUSCBZ.build(16);
 				
 		var heightMap = new Array<Float>();
-		for (i in 0...640){
-			//var j = 160 - i / 2;
-			//heightMap.push(j);
+		for (i in 0...128){
+			heightMap.push(0);
+		}
+		for (i in 0...128){
+			heightMap.push(160);
+		}
+		for (i in 0...128){
+			heightMap.push(0);
+		}
+		for (i in 0...128){
+			heightMap.push(-160);
+		}
+		for (i in 0...128){
 			heightMap.push(0);
 		}
 		
-		var p1 = new Controller(Key.W, Key.S, Key.A, Key.D,
+		var p = new Controller(Key.W, Key.S, Key.A, Key.D,
 			Key.Q, Key.E, Key.R, Key.F, Key.SPACE, Key.SHIFT);
-
-		var p2 = new Controller(Key.UP, Key.DOWN, Key.LEFT, Key.RIGHT,
-			Key.U, Key.I, Key.J, Key.K, Key.L, Key.O);
-
+			
 		var tanks = new Array<Tank>();
-		tanks.push(new Tank(640 / 4, true, 100,p1));
-		tanks.push(new Tank(3*640 / 4, false, 100,p2));
+		tanks.push(new Tank(640 / 4, true, p));
+		tanks.push(new Tank(3*640 / 4, false,p));
 		
 		world = new World(heightMap,tanks);
 		world.draw(g);

@@ -43633,22 +43633,26 @@ $hxClasses["invertotanks.Bullet"] = invertotanks_Bullet;
 invertotanks_Bullet.__name__ = ["invertotanks","Bullet"];
 invertotanks_Bullet.prototype = {
 	update: function(world) {
-		var newPos = world.travel(this.x,this.y,this.vx,this.vy,this.above);
-		this.x = newPos.x;
-		this.y = newPos.y;
-		this.vx = newPos.vx;
-		this.vy = newPos.vy;
-		if(newPos.inverted) {
-			if(this.inverse-- <= 0) {
-				this.explode(world);
-				return true;
+		var _g = 0;
+		while(_g < 4) {
+			++_g;
+			var newPos = world.travel(this.x,this.y,this.vx,this.vy,this.above);
+			this.x = newPos.x;
+			this.y = newPos.y;
+			this.vx = newPos.vx;
+			this.vy = newPos.vy;
+			if(newPos.inverted) {
+				if(this.inverse-- <= 0) {
+					this.explode(world);
+					return true;
+				}
+				this.above = !this.above;
 			}
-			this.above = !this.above;
 		}
 		return false;
 	}
 	,explode: function(world) {
-		world.dExplode(this.x,this.y,this.damageRadius,this.damageRadius,this.origin);
+		world.dExplode(this.x,this.y,this.damageRadius,this.damage,this.origin);
 		world.physExplode(this.x,this.y,this.modRadius,this.originallyAbove,this.builder);
 		world.gExplode(new invertotanks_Explosion(this.x,this.y,this.modRadius,this.damageRadius));
 	}
@@ -43755,7 +43759,7 @@ invertotanks_Controller.prototype = {
 		if(this.key[8] == null) {
 			return false;
 		} else {
-			return hxd_Key.isDown(this.key[8]);
+			return hxd_Key.isPressed(this.key[8]);
 		}
 	}
 	,get_precise: function() {
@@ -43825,15 +43829,34 @@ invertotanks_Main.prototype = $extend(hxd_App.prototype,{
 		this.font = hxd_Res.get_loader().loadFont("TITUSCBZ.TTF").build(16);
 		var heightMap = [];
 		var _g = 0;
-		while(_g < 640) {
+		while(_g < 128) {
 			++_g;
 			heightMap.push(0);
 		}
-		var p1 = new invertotanks_Controller(87,83,65,68,81,69,82,70,32,16);
-		var p2 = new invertotanks_Controller(38,40,37,39,85,73,74,75,76,79);
+		var _g1 = 0;
+		while(_g1 < 128) {
+			++_g1;
+			heightMap.push(160);
+		}
+		var _g2 = 0;
+		while(_g2 < 128) {
+			++_g2;
+			heightMap.push(0);
+		}
+		var _g3 = 0;
+		while(_g3 < 128) {
+			++_g3;
+			heightMap.push(-160);
+		}
+		var _g4 = 0;
+		while(_g4 < 128) {
+			++_g4;
+			heightMap.push(0);
+		}
+		var p = new invertotanks_Controller(87,83,65,68,81,69,82,70,32,16);
 		var tanks = [];
-		tanks.push(new invertotanks_Tank(160.,true,100,p1));
-		tanks.push(new invertotanks_Tank(480.,false,100,p2));
+		tanks.push(new invertotanks_Tank(160.,true,p));
+		tanks.push(new invertotanks_Tank(480.,false,p));
 		this.world = new invertotanks_World(heightMap,tanks);
 		this.world.draw(this.g);
 	}
@@ -43888,40 +43911,39 @@ invertotanks_Main.prototype = $extend(hxd_App.prototype,{
 	}
 	,__class__: invertotanks_Main
 });
-var invertotanks_Tank = function(x,above,fuel,controller) {
+var invertotanks_Tank = function(x,above,controller) {
 	this.x = x;
 	this.above = above;
-	this.fuel = fuel;
 	this.c = controller;
-	this.shotTimer = 0;
 	this.degree = above?-Math.PI / 3:2 * Math.PI / 3;
 	this.force = 50;
 	this.invertions = 0;
 	this.health = 100.0;
+	this.fuel = 20.;
 	this.invertionsText = invertotanks_Main.makeText(Std.string(this.invertions));
 };
 $hxClasses["invertotanks.Tank"] = invertotanks_Tank;
 invertotanks_Tank.__name__ = ["invertotanks","Tank"];
 invertotanks_Tank.prototype = {
-	update: function(world) {
-		this.shotTimer += invertotanks_Main.dt / 60;
+	turnEnd: function() {
+		this.fuel += 2.;
+		if(this.fuel > 40.0) {
+			this.fuel = 40.0;
+		}
+	}
+	,update: function(world) {
 		if(this.c != null) {
 			var precise = this.c.get_precise();
 			if(this.c.get_fire()) {
-				if(this.shotTimer >= 1.5) {
-					this.shotTimer -= 1.5;
-					if(this.shotTimer >= 0.75) {
-						this.shotTimer = 0;
-					}
-					world.fire(this.force,this.degree,new invertotanks_BulletType(3,16,24,0,false,this.invertions),this);
-				}
+				world.fire(this.force,this.degree,new invertotanks_BulletType(3,8,12,20,false,this.invertions),this);
+				return true;
 			}
 			if(this.c.get_left()) {
 				if(!this.c.get_right()) {
-					this.move(precise?-0.325:-0.65);
+					this.move(precise?-0.325:-0.65,world);
 				}
 			} else if(this.c.get_right()) {
-				this.move(precise?0.325:0.65);
+				this.move(precise?0.325:0.65,world);
 			}
 			if(this.c.get_up()) {
 				if(!this.c.get_down()) {
@@ -43944,15 +43966,22 @@ invertotanks_Tank.prototype = {
 				this.moveInvertions(-1);
 			}
 		}
+		return false;
 	}
-	,move: function(vx) {
+	,move: function(vx,world) {
+		if(vx == 0 || this.fuel <= 0) {
+			return;
+		}
+		if(!world.canMove(this.x,vx > 0,this.above)) {
+			return;
+		}
 		this.x += invertotanks_Main.dt * vx;
 		if(this.x < 1) {
 			this.x = 1;
 		} else if(this.x > 638) {
 			this.x = 638;
 		} else {
-			this.fuel -= invertotanks_Main.dt * vx / 10;
+			this.fuel -= Math.abs(invertotanks_Main.dt * vx / 10);
 		}
 	}
 	,moveDeg: function(vd) {
@@ -44000,6 +44029,10 @@ var invertotanks_World = function(heightMap,tanks) {
 	this.gravity = 20;
 	this.wind = 0;
 	this.wallHeight = 640;
+	this.currentTank = 0;
+	this.playerIndicatorArrowHeight = 48.;
+	this.playerIndicatorArrowHeight /= 2;
+	this.playerIndicatorArrowDir = 0.1;
 };
 $hxClasses["invertotanks.World"] = invertotanks_World;
 invertotanks_World.__name__ = ["invertotanks","World"];
@@ -44023,12 +44056,20 @@ invertotanks_World.prototype = {
 				HxOverrides.remove(this.bullets,bullet);
 			}
 		}
-		var _g3 = 0;
-		var _g12 = this.tanks;
-		while(_g3 < _g12.length) {
-			var tank = _g12[_g3];
-			++_g3;
-			tank.update(this);
+		if(this.bullets.length == 0 && this.explosions.length == 0) {
+			this.playerIndicatorArrowHeight += this.playerIndicatorArrowDir * invertotanks_Main.dt;
+			if(this.playerIndicatorArrowHeight >= 26.5) {
+				this.playerIndicatorArrowHeight = 26.5;
+				this.playerIndicatorArrowDir = -this.playerIndicatorArrowDir;
+			} else if(this.playerIndicatorArrowHeight < 21.5) {
+				this.playerIndicatorArrowHeight = 21.5;
+				this.playerIndicatorArrowDir = -this.playerIndicatorArrowDir;
+			}
+			if(this.tanks[this.currentTank].update(this)) {
+				this.tanks[this.currentTank].turnEnd();
+				this.currentTank++;
+				this.currentTank = this.currentTank % this.tanks.length;
+			}
 		}
 	}
 	,physExplode: function(x,y,r,above,grow) {
@@ -44066,7 +44107,7 @@ invertotanks_World.prototype = {
 			var tank = _g1[_g];
 			++_g;
 			var dx = tank.x - x;
-			var dy = this.getHeight(tank) - y;
+			var dy = this.getHeight(tank.x) - y;
 			if(dx * dx + dy * dy <= r * r) {
 				tank.damage(d);
 			}
@@ -44127,13 +44168,20 @@ invertotanks_World.prototype = {
 	,fire: function(force,degree,b,tank) {
 		var dx = Math.cos(degree);
 		var dy = -Math.sin(degree);
-		var height = this.getHeight(tank);
+		var height = this.getHeight(tank.x);
 		this.bullets.push(new invertotanks_Bullet(tank.x + dx * 8.5 * 1.5,height + dy * 8.5 * 1.5,b.r,dx * force,dy * force,b.modRadius,b.damageRadius,b.damage,b.builder,b.inverse,tank.above,tank));
 	}
-	,getHeight: function(tank) {
-		var x = tank.x | 0;
-		var height = tank.x - x;
-		height = (1 - height) * this.heightMap[x] + height * this.heightMap[x + 1];
+	,canMove: function(x,right,above) {
+		if(above) {
+			return this.getHeight(x + (right?1:-1)) - this.getHeight(x) <= 7;
+		} else {
+			return this.getHeight(x) - this.getHeight(x + (right?1:-1)) <= 7;
+		}
+	}
+	,getHeight: function(x) {
+		var xInt = x | 0;
+		var height = x - xInt;
+		height = (1 - height) * this.heightMap[xInt] + height * this.heightMap[xInt + 1];
 		return height;
 	}
 	,draw: function(g) {
@@ -44162,7 +44210,7 @@ invertotanks_World.prototype = {
 			if(tank.above) {
 				deg += Math.PI;
 			}
-			var height = 240 - this.getHeight(tank);
+			var height = 240 - this.getHeight(tank.x);
 			g.curA = 0.5;
 			g.curR = 1.;
 			g.curG = 1.;
@@ -44172,9 +44220,11 @@ invertotanks_World.prototype = {
 			g.drawPie(tank.x,height,8.5,deg,Math.PI);
 			g.drawPie(tank.x,height,12.75,tank.degree - Math.PI / 16,Math.PI / 8);
 			g.beginFill(0);
-			g.drawRect(tank.x - 8.5 - 1,height + (tank.above?-19.5:16.5) - 1,17.,6);
+			g.drawRect(tank.x - 8.5 - 1,height + (tank.above?-19.5:16.5) - 1,19.,6);
 			g.beginFill(65280);
 			g.drawRect(tank.x - 8.5,height + (tank.above?-19.5:16.5),tank.health * 8.5 / 50,4);
+			g.beginFill(8355711);
+			g.drawRect(tank.x - 8.5,height + (tank.above?-17.5:18.5),tank.fuel * 8.5 / 20,2);
 			var _this = tank.invertionsText;
 			var v = tank.x - (tank.above?2:3);
 			_this.posChanged = true;
@@ -44184,15 +44234,22 @@ invertotanks_World.prototype = {
 			_this1.posChanged = true;
 			_this1.y = v1;
 		}
-		var _g3 = 0;
-		var _g12 = this.bullets;
-		while(_g3 < _g12.length) {
-			var bullet = _g12[_g3];
-			++_g3;
-			g.beginFill(0);
-			g.drawCircle(bullet.x,240 - bullet.y,bullet.r);
-			g.beginFill(16777215);
-			g.drawCircle(bullet.x,240 - bullet.y,bullet.r - 1);
+		if(this.bullets.length != 0) {
+			var _g3 = 0;
+			var _g12 = this.bullets;
+			while(_g3 < _g12.length) {
+				var bullet = _g12[_g3];
+				++_g3;
+				g.beginFill(0);
+				g.drawCircle(bullet.x,240 - bullet.y,bullet.r);
+				g.beginFill(16777215);
+				g.drawCircle(bullet.x,240 - bullet.y,bullet.r - 1);
+			}
+		} else {
+			var tank1 = this.tanks[this.currentTank];
+			var height1 = 240 - this.getHeight(tank1.x);
+			g.beginFill(65280);
+			g.drawPie(tank1.x,height1 + (tank1.above?-this.playerIndicatorArrowHeight:this.playerIndicatorArrowHeight),10,tank1.above?-2 * Math.PI / 3:Math.PI / 3,Math.PI / 3);
 		}
 		var _g4 = 0;
 		var _g13 = this.explosions;
@@ -45001,15 +45058,19 @@ hxsl_GlslOut.GLOBALS = (function($this) {
 hxsl_GlslOut.MAT34 = "struct _mat3x4 { vec4 a; vec4 b; vec4 c; };";
 hxsl_Printer.SWIZ = ["x","y","z","w"];
 hxsl_RuntimeShader.UID = 0;
+invertotanks_Bullet.bulletSpeedUp = 4;
 invertotanks_Tank.vx = 0.65;
 invertotanks_Tank.vf = 0.5;
 invertotanks_Tank.vd = 0.032724923466666667;
 invertotanks_Tank.pm = 0.5;
 invertotanks_Tank.sTime = 1.5;
-invertotanks_Tank.maxHeightDist = 3;
 invertotanks_Tank.maxHealth = 100.0;
+invertotanks_Tank.maxFuel = 40.0;
+invertotanks_World.tankMaxHeightDist = 7;
 invertotanks_World.tankSize = 8.5;
 invertotanks_World.healthHeight = 16.5;
+invertotanks_World.minPlayerIndicatorArrowHeight = 21.5;
+invertotanks_World.maxPlayerIndicatorArrowHeight = 26.5;
 js_html_compat_Float32Array.BYTES_PER_ELEMENT = 4;
 js_html_compat_Uint8Array.BYTES_PER_ELEMENT = 1;
 invertotanks_Main.main();

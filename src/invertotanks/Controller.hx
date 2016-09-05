@@ -49,6 +49,7 @@ class Controller{
 		if (key[i] == null){
 			return false;
 		}
+		//Consider using isReleased or alternative method to stop registering repeat
 		return Key.isPressed(key[i]);
 	}
 	
@@ -62,7 +63,7 @@ class Controller{
 	function get_forceUp(){return get(6); };
 	function get_forceDown(){return get(7); };
 	
-	function get_fire(){return get(8); };
+	function get_fire(){return getP(8); };
 	function get_precise(){return get(9); };
 	
 }
