@@ -56,7 +56,7 @@ class Tank
 		if (c != null){
 			var precise = c.precise;
 			if(c.fire){
-				world.fire(force, degree, new BulletType(3, 8, 12, 20, false, invertions), this);
+				world.fire(force, degree, new BulletType(3, 24, 12, 20, false, true, invertions), this);
 				return true;
 			}
 			if(c.left){

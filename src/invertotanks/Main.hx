@@ -38,18 +38,29 @@ class Main extends App {
 		for (i in 0...128){
 			heightMap.push(0);
 		}
-		for (i in 0...128){
-			heightMap.push(160);
+		for (i in 0...64){
+			heightMap.push(i);
+		}
+		for (i in 0...64){
+			heightMap.push(64-i);
 		}
 		for (i in 0...128){
 			heightMap.push(0);
 		}
-		for (i in 0...128){
-			heightMap.push(-160);
+		for (i in 0...64){
+			heightMap.push(-i);
+		}		
+		for (i in 0...64){
+			heightMap.push(i-64);
 		}
 		for (i in 0...128){
 			heightMap.push(0);
 		}
+		/*for (i in 0...640){
+			heightMap.push(320 / 0.8 - i / 0.8);
+			trace(heightMap[i]);
+		}*/
+		
 		
 		var p = new Controller(Key.W, Key.S, Key.A, Key.D,
 			Key.Q, Key.E, Key.R, Key.F, Key.SPACE, Key.SHIFT);
@@ -60,6 +71,15 @@ class Main extends App {
 		
 		world = new World(heightMap,tanks);
 		world.draw(g);
+		
+		/*for (dx in -2...2){
+			for (dy in -1...1){
+				World.reflect(dx, dy, 1, 0);
+				World.reflect(dx, dy, -1, 0);
+				World.reflect(dx, dy, 0, 1);
+				World.reflect(dx, dy, 0, -1);
+			}			
+		}*/
 	}
 	
 	override function update(dt:Float) {

@@ -13,7 +13,77 @@ var EReg = function(r,opt) {
 $hxClasses["EReg"] = EReg;
 EReg.__name__ = ["EReg"];
 EReg.prototype = {
-	__class__: EReg
+	match: function(s) {
+		if(this.r.global) {
+			this.r.lastIndex = 0;
+		}
+		this.r.m = this.r.exec(s);
+		this.r.s = s;
+		return this.r.m != null;
+	}
+	,matched: function(n) {
+		if(this.r.m != null && n >= 0 && n < this.r.m.length) {
+			return this.r.m[n];
+		} else {
+			throw new js__$Boot_HaxeError("EReg::matched");
+		}
+	}
+	,matchedPos: function() {
+		if(this.r.m == null) {
+			throw new js__$Boot_HaxeError("No string matched");
+		}
+		return { pos : this.r.m.index, len : this.r.m[0].length};
+	}
+	,matchSub: function(s,pos,len) {
+		if(len == null) {
+			len = -1;
+		}
+		if(this.r.global) {
+			this.r.lastIndex = pos;
+			this.r.m = this.r.exec(len < 0?s:HxOverrides.substr(s,0,pos + len));
+			var b = this.r.m != null;
+			if(b) {
+				this.r.s = s;
+			}
+			return b;
+		} else {
+			var b1 = this.match(len < 0?HxOverrides.substr(s,pos,null):HxOverrides.substr(s,pos,len));
+			if(b1) {
+				this.r.s = s;
+				this.r.m.index += pos;
+			}
+			return b1;
+		}
+	}
+	,map: function(s,f) {
+		var offset = 0;
+		var buf_b = "";
+		while(true) {
+			if(offset >= s.length) {
+				break;
+			} else if(!this.matchSub(s,offset)) {
+				buf_b += Std.string(HxOverrides.substr(s,offset,null));
+				break;
+			}
+			var p = this.matchedPos();
+			buf_b += Std.string(HxOverrides.substr(s,offset,p.pos - offset));
+			buf_b += Std.string(f(this));
+			if(p.len == 0) {
+				buf_b += Std.string(HxOverrides.substr(s,p.pos,1));
+				offset = p.pos + 1;
+			} else {
+				offset = p.pos + p.len;
+			}
+			if(!this.r.global) {
+				break;
+			}
+		}
+		if(!this.r.global && offset > 0 && offset < s.length) {
+			buf_b += Std.string(HxOverrides.substr(s,offset,null));
+		}
+		return buf_b;
+	}
+	,__class__: EReg
 };
 var HxOverrides = function() { };
 $hxClasses["HxOverrides"] = HxOverrides;
@@ -216,6 +286,13 @@ Reflect.isEnumValue = function(v) {
 		return false;
 	}
 };
+Reflect.deleteField = function(o,field) {
+	if(!Object.prototype.hasOwnProperty.call(o,field)) {
+		return false;
+	}
+	delete(o[field]);
+	return true;
+};
 Reflect.makeVarArgs = function(f) {
 	return function() {
 		var a = Array.prototype.slice.call(arguments);
@@ -316,7 +393,7 @@ StringTools.hex = function(n,digits) {
 	}
 	return s;
 };
-var ValueType = $hxClasses["ValueType"] = { __ename__ : true, __constructs__ : ["TNull","TInt","TFloat","TBool","TObject","TFunction","TClass","TEnum","TUnknown"] };
+var ValueType = $hxClasses["ValueType"] = { __ename__ : ["ValueType"], __constructs__ : ["TNull","TInt","TFloat","TBool","TObject","TFunction","TClass","TEnum","TUnknown"] };
 ValueType.TNull = ["TNull",0];
 ValueType.TNull.toString = $estr;
 ValueType.TNull.__enum__ = ValueType;
@@ -349,6 +426,10 @@ Type.getClassName = function(c) {
 	if(a == null) {
 		return null;
 	}
+	return a.join(".");
+};
+Type.getEnumName = function(e) {
+	var a = e.__ename__;
 	return a.join(".");
 };
 Type.resolveClass = function(name) {
@@ -384,6 +465,13 @@ Type.createEnum = function(e,constr,params) {
 		throw new js__$Boot_HaxeError("Constructor " + constr + " does not need parameters");
 	}
 	return f;
+};
+Type.createEnumIndex = function(e,index,params) {
+	var c = e.__constructs__[index];
+	if(c == null) {
+		throw new js__$Boot_HaxeError(index + " is not a valid enum constructor index");
+	}
+	return Type.createEnum(e,c,params);
 };
 Type["typeof"] = function(v) {
 	var _g = typeof(v);
@@ -621,10 +709,10 @@ Xml.prototype = {
 	}
 	,__class__: Xml
 };
-var format_abc_Index = $hxClasses["format.abc.Index"] = { __ename__ : true, __constructs__ : ["Idx"] };
+var format_abc_Index = $hxClasses["format.abc.Index"] = { __ename__ : ["format","abc","Index"], __constructs__ : ["Idx"] };
 format_abc_Index.Idx = function(v) { var $x = ["Idx",0,v]; $x.__enum__ = format_abc_Index; $x.toString = $estr; return $x; };
 format_abc_Index.__empty_constructs__ = [];
-var format_abc_Namespace = $hxClasses["format.abc.Namespace"] = { __ename__ : true, __constructs__ : ["NPrivate","NNamespace","NPublic","NInternal","NProtected","NExplicit","NStaticProtected"] };
+var format_abc_Namespace = $hxClasses["format.abc.Namespace"] = { __ename__ : ["format","abc","Namespace"], __constructs__ : ["NPrivate","NNamespace","NPublic","NInternal","NProtected","NExplicit","NStaticProtected"] };
 format_abc_Namespace.NPrivate = function(ns) { var $x = ["NPrivate",0,ns]; $x.__enum__ = format_abc_Namespace; $x.toString = $estr; return $x; };
 format_abc_Namespace.NNamespace = function(ns) { var $x = ["NNamespace",1,ns]; $x.__enum__ = format_abc_Namespace; $x.toString = $estr; return $x; };
 format_abc_Namespace.NPublic = function(ns) { var $x = ["NPublic",2,ns]; $x.__enum__ = format_abc_Namespace; $x.toString = $estr; return $x; };
@@ -633,7 +721,7 @@ format_abc_Namespace.NProtected = function(ns) { var $x = ["NProtected",4,ns]; $
 format_abc_Namespace.NExplicit = function(ns) { var $x = ["NExplicit",5,ns]; $x.__enum__ = format_abc_Namespace; $x.toString = $estr; return $x; };
 format_abc_Namespace.NStaticProtected = function(ns) { var $x = ["NStaticProtected",6,ns]; $x.__enum__ = format_abc_Namespace; $x.toString = $estr; return $x; };
 format_abc_Namespace.__empty_constructs__ = [];
-var format_abc_Name = $hxClasses["format.abc.Name"] = { __ename__ : true, __constructs__ : ["NName","NMulti","NRuntime","NRuntimeLate","NMultiLate","NAttrib","NParams"] };
+var format_abc_Name = $hxClasses["format.abc.Name"] = { __ename__ : ["format","abc","Name"], __constructs__ : ["NName","NMulti","NRuntime","NRuntimeLate","NMultiLate","NAttrib","NParams"] };
 format_abc_Name.NName = function(name,ns) { var $x = ["NName",0,name,ns]; $x.__enum__ = format_abc_Name; $x.toString = $estr; return $x; };
 format_abc_Name.NMulti = function(name,ns) { var $x = ["NMulti",1,name,ns]; $x.__enum__ = format_abc_Name; $x.toString = $estr; return $x; };
 format_abc_Name.NRuntime = function(name) { var $x = ["NRuntime",2,name]; $x.__enum__ = format_abc_Name; $x.toString = $estr; return $x; };
@@ -644,7 +732,7 @@ format_abc_Name.NMultiLate = function(nset) { var $x = ["NMultiLate",4,nset]; $x
 format_abc_Name.NAttrib = function(n) { var $x = ["NAttrib",5,n]; $x.__enum__ = format_abc_Name; $x.toString = $estr; return $x; };
 format_abc_Name.NParams = function(n,params) { var $x = ["NParams",6,n,params]; $x.__enum__ = format_abc_Name; $x.toString = $estr; return $x; };
 format_abc_Name.__empty_constructs__ = [format_abc_Name.NRuntimeLate];
-var format_abc_Value = $hxClasses["format.abc.Value"] = { __ename__ : true, __constructs__ : ["VNull","VBool","VString","VInt","VUInt","VFloat","VNamespace"] };
+var format_abc_Value = $hxClasses["format.abc.Value"] = { __ename__ : ["format","abc","Value"], __constructs__ : ["VNull","VBool","VString","VInt","VUInt","VFloat","VNamespace"] };
 format_abc_Value.VNull = ["VNull",0];
 format_abc_Value.VNull.toString = $estr;
 format_abc_Value.VNull.__enum__ = format_abc_Value;
@@ -655,7 +743,7 @@ format_abc_Value.VUInt = function(i) { var $x = ["VUInt",4,i]; $x.__enum__ = for
 format_abc_Value.VFloat = function(f) { var $x = ["VFloat",5,f]; $x.__enum__ = format_abc_Value; $x.toString = $estr; return $x; };
 format_abc_Value.VNamespace = function(kind,ns) { var $x = ["VNamespace",6,kind,ns]; $x.__enum__ = format_abc_Value; $x.toString = $estr; return $x; };
 format_abc_Value.__empty_constructs__ = [format_abc_Value.VNull];
-var format_abc_MethodKind = $hxClasses["format.abc.MethodKind"] = { __ename__ : true, __constructs__ : ["KNormal","KGetter","KSetter"] };
+var format_abc_MethodKind = $hxClasses["format.abc.MethodKind"] = { __ename__ : ["format","abc","MethodKind"], __constructs__ : ["KNormal","KGetter","KSetter"] };
 format_abc_MethodKind.KNormal = ["KNormal",0];
 format_abc_MethodKind.KNormal.toString = $estr;
 format_abc_MethodKind.KNormal.__enum__ = format_abc_MethodKind;
@@ -666,7 +754,7 @@ format_abc_MethodKind.KSetter = ["KSetter",2];
 format_abc_MethodKind.KSetter.toString = $estr;
 format_abc_MethodKind.KSetter.__enum__ = format_abc_MethodKind;
 format_abc_MethodKind.__empty_constructs__ = [format_abc_MethodKind.KNormal,format_abc_MethodKind.KGetter,format_abc_MethodKind.KSetter];
-var format_abc_FieldKind = $hxClasses["format.abc.FieldKind"] = { __ename__ : true, __constructs__ : ["FVar","FMethod","FClass","FFunction"] };
+var format_abc_FieldKind = $hxClasses["format.abc.FieldKind"] = { __ename__ : ["format","abc","FieldKind"], __constructs__ : ["FVar","FMethod","FClass","FFunction"] };
 format_abc_FieldKind.FVar = function(type,value,$const) { var $x = ["FVar",0,type,value,$const]; $x.__enum__ = format_abc_FieldKind; $x.toString = $estr; return $x; };
 format_abc_FieldKind.FMethod = function(type,k,isFinal,isOverride) { var $x = ["FMethod",1,type,k,isFinal,isOverride]; $x.__enum__ = format_abc_FieldKind; $x.toString = $estr; return $x; };
 format_abc_FieldKind.FClass = function(c) { var $x = ["FClass",2,c]; $x.__enum__ = format_abc_FieldKind; $x.toString = $estr; return $x; };
@@ -682,7 +770,7 @@ format_abc_ABCData.prototype = {
 	}
 	,__class__: format_abc_ABCData
 };
-var format_abc_OpCode = $hxClasses["format.abc.OpCode"] = { __ename__ : true, __constructs__ : ["OBreakPoint","ONop","OThrow","OGetSuper","OSetSuper","ODxNs","ODxNsLate","ORegKill","OLabel","OJump","OSwitch","OPushWith","OPopScope","OForIn","OHasNext","ONull","OUndefined","OForEach","OSmallInt","OInt","OTrue","OFalse","ONaN","OPop","ODup","OSwap","OString","OIntRef","OUIntRef","OFloat","OScope","ONamespace","ONext","OFunction","OCallStack","OConstruct","OCallMethod","OCallStatic","OCallSuper","OCallProperty","ORetVoid","ORet","OConstructSuper","OConstructProperty","OCallPropLex","OCallSuperVoid","OCallPropVoid","OApplyType","OObject","OArray","ONewBlock","OClassDef","OGetDescendants","OCatch","OFindPropStrict","OFindProp","OFindDefinition","OGetLex","OSetProp","OReg","OSetReg","OGetGlobalScope","OGetScope","OGetProp","OInitProp","ODeleteProp","OGetSlot","OSetSlot","OToString","OToXml","OToXmlAttr","OToInt","OToUInt","OToNumber","OToBool","OToObject","OCheckIsXml","OCast","OAsAny","OAsString","OAsType","OAsObject","OIncrReg","ODecrReg","OTypeof","OInstanceOf","OIsType","OIncrIReg","ODecrIReg","OThis","OSetThis","ODebugReg","ODebugLine","ODebugFile","OBreakPointLine","OTimestamp","OOp","OUnknown"] };
+var format_abc_OpCode = $hxClasses["format.abc.OpCode"] = { __ename__ : ["format","abc","OpCode"], __constructs__ : ["OBreakPoint","ONop","OThrow","OGetSuper","OSetSuper","ODxNs","ODxNsLate","ORegKill","OLabel","OJump","OSwitch","OPushWith","OPopScope","OForIn","OHasNext","ONull","OUndefined","OForEach","OSmallInt","OInt","OTrue","OFalse","ONaN","OPop","ODup","OSwap","OString","OIntRef","OUIntRef","OFloat","OScope","ONamespace","ONext","OFunction","OCallStack","OConstruct","OCallMethod","OCallStatic","OCallSuper","OCallProperty","ORetVoid","ORet","OConstructSuper","OConstructProperty","OCallPropLex","OCallSuperVoid","OCallPropVoid","OApplyType","OObject","OArray","ONewBlock","OClassDef","OGetDescendants","OCatch","OFindPropStrict","OFindProp","OFindDefinition","OGetLex","OSetProp","OReg","OSetReg","OGetGlobalScope","OGetScope","OGetProp","OInitProp","ODeleteProp","OGetSlot","OSetSlot","OToString","OToXml","OToXmlAttr","OToInt","OToUInt","OToNumber","OToBool","OToObject","OCheckIsXml","OCast","OAsAny","OAsString","OAsType","OAsObject","OIncrReg","ODecrReg","OTypeof","OInstanceOf","OIsType","OIncrIReg","ODecrIReg","OThis","OSetThis","ODebugReg","ODebugLine","ODebugFile","OBreakPointLine","OTimestamp","OOp","OUnknown"] };
 format_abc_OpCode.OBreakPoint = ["OBreakPoint",0];
 format_abc_OpCode.OBreakPoint.toString = $estr;
 format_abc_OpCode.OBreakPoint.__enum__ = format_abc_OpCode;
@@ -862,7 +950,7 @@ format_abc_OpCode.OTimestamp.__enum__ = format_abc_OpCode;
 format_abc_OpCode.OOp = function(op) { var $x = ["OOp",96,op]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
 format_abc_OpCode.OUnknown = function($byte) { var $x = ["OUnknown",97,$byte]; $x.__enum__ = format_abc_OpCode; $x.toString = $estr; return $x; };
 format_abc_OpCode.__empty_constructs__ = [format_abc_OpCode.OBreakPoint,format_abc_OpCode.ONop,format_abc_OpCode.OThrow,format_abc_OpCode.ODxNsLate,format_abc_OpCode.OLabel,format_abc_OpCode.OPushWith,format_abc_OpCode.OPopScope,format_abc_OpCode.OForIn,format_abc_OpCode.OHasNext,format_abc_OpCode.ONull,format_abc_OpCode.OUndefined,format_abc_OpCode.OForEach,format_abc_OpCode.OTrue,format_abc_OpCode.OFalse,format_abc_OpCode.ONaN,format_abc_OpCode.OPop,format_abc_OpCode.ODup,format_abc_OpCode.OSwap,format_abc_OpCode.OScope,format_abc_OpCode.ORetVoid,format_abc_OpCode.ORet,format_abc_OpCode.ONewBlock,format_abc_OpCode.OGetGlobalScope,format_abc_OpCode.OToString,format_abc_OpCode.OToXml,format_abc_OpCode.OToXmlAttr,format_abc_OpCode.OToInt,format_abc_OpCode.OToUInt,format_abc_OpCode.OToNumber,format_abc_OpCode.OToBool,format_abc_OpCode.OToObject,format_abc_OpCode.OCheckIsXml,format_abc_OpCode.OAsAny,format_abc_OpCode.OAsString,format_abc_OpCode.OAsObject,format_abc_OpCode.OTypeof,format_abc_OpCode.OInstanceOf,format_abc_OpCode.OThis,format_abc_OpCode.OSetThis,format_abc_OpCode.OTimestamp];
-var format_abc_JumpStyle = $hxClasses["format.abc.JumpStyle"] = { __ename__ : true, __constructs__ : ["JNotLt","JNotLte","JNotGt","JNotGte","JAlways","JTrue","JFalse","JEq","JNeq","JLt","JLte","JGt","JGte","JPhysEq","JPhysNeq"] };
+var format_abc_JumpStyle = $hxClasses["format.abc.JumpStyle"] = { __ename__ : ["format","abc","JumpStyle"], __constructs__ : ["JNotLt","JNotLte","JNotGt","JNotGte","JAlways","JTrue","JFalse","JEq","JNeq","JLt","JLte","JGt","JGte","JPhysEq","JPhysNeq"] };
 format_abc_JumpStyle.JNotLt = ["JNotLt",0];
 format_abc_JumpStyle.JNotLt.toString = $estr;
 format_abc_JumpStyle.JNotLt.__enum__ = format_abc_JumpStyle;
@@ -909,7 +997,7 @@ format_abc_JumpStyle.JPhysNeq = ["JPhysNeq",14];
 format_abc_JumpStyle.JPhysNeq.toString = $estr;
 format_abc_JumpStyle.JPhysNeq.__enum__ = format_abc_JumpStyle;
 format_abc_JumpStyle.__empty_constructs__ = [format_abc_JumpStyle.JNotLt,format_abc_JumpStyle.JNotLte,format_abc_JumpStyle.JNotGt,format_abc_JumpStyle.JNotGte,format_abc_JumpStyle.JAlways,format_abc_JumpStyle.JTrue,format_abc_JumpStyle.JFalse,format_abc_JumpStyle.JEq,format_abc_JumpStyle.JNeq,format_abc_JumpStyle.JLt,format_abc_JumpStyle.JLte,format_abc_JumpStyle.JGt,format_abc_JumpStyle.JGte,format_abc_JumpStyle.JPhysEq,format_abc_JumpStyle.JPhysNeq];
-var format_abc_Operation = $hxClasses["format.abc.Operation"] = { __ename__ : true, __constructs__ : ["OpAs","OpNeg","OpIncr","OpDecr","OpNot","OpBitNot","OpAdd","OpSub","OpMul","OpDiv","OpMod","OpShl","OpShr","OpUShr","OpAnd","OpOr","OpXor","OpEq","OpPhysEq","OpLt","OpLte","OpGt","OpGte","OpIs","OpIn","OpIIncr","OpIDecr","OpINeg","OpIAdd","OpISub","OpIMul","OpMemGet8","OpMemGet16","OpMemGet32","OpMemGetFloat","OpMemGetDouble","OpMemSet8","OpMemSet16","OpMemSet32","OpMemSetFloat","OpMemSetDouble","OpSign1","OpSign8","OpSign16"] };
+var format_abc_Operation = $hxClasses["format.abc.Operation"] = { __ename__ : ["format","abc","Operation"], __constructs__ : ["OpAs","OpNeg","OpIncr","OpDecr","OpNot","OpBitNot","OpAdd","OpSub","OpMul","OpDiv","OpMod","OpShl","OpShr","OpUShr","OpAnd","OpOr","OpXor","OpEq","OpPhysEq","OpLt","OpLte","OpGt","OpGte","OpIs","OpIn","OpIIncr","OpIDecr","OpINeg","OpIAdd","OpISub","OpIMul","OpMemGet8","OpMemGet16","OpMemGet32","OpMemGetFloat","OpMemGetDouble","OpMemSet8","OpMemSet16","OpMemSet32","OpMemSetFloat","OpMemSetDouble","OpSign1","OpSign8","OpSign16"] };
 format_abc_Operation.OpAs = ["OpAs",0];
 format_abc_Operation.OpAs.toString = $estr;
 format_abc_Operation.OpAs.__enum__ = format_abc_Operation;
@@ -1043,7 +1131,7 @@ format_abc_Operation.OpSign16 = ["OpSign16",43];
 format_abc_Operation.OpSign16.toString = $estr;
 format_abc_Operation.OpSign16.__enum__ = format_abc_Operation;
 format_abc_Operation.__empty_constructs__ = [format_abc_Operation.OpAs,format_abc_Operation.OpNeg,format_abc_Operation.OpIncr,format_abc_Operation.OpDecr,format_abc_Operation.OpNot,format_abc_Operation.OpBitNot,format_abc_Operation.OpAdd,format_abc_Operation.OpSub,format_abc_Operation.OpMul,format_abc_Operation.OpDiv,format_abc_Operation.OpMod,format_abc_Operation.OpShl,format_abc_Operation.OpShr,format_abc_Operation.OpUShr,format_abc_Operation.OpAnd,format_abc_Operation.OpOr,format_abc_Operation.OpXor,format_abc_Operation.OpEq,format_abc_Operation.OpPhysEq,format_abc_Operation.OpLt,format_abc_Operation.OpLte,format_abc_Operation.OpGt,format_abc_Operation.OpGte,format_abc_Operation.OpIs,format_abc_Operation.OpIn,format_abc_Operation.OpIIncr,format_abc_Operation.OpIDecr,format_abc_Operation.OpINeg,format_abc_Operation.OpIAdd,format_abc_Operation.OpISub,format_abc_Operation.OpIMul,format_abc_Operation.OpMemGet8,format_abc_Operation.OpMemGet16,format_abc_Operation.OpMemGet32,format_abc_Operation.OpMemGetFloat,format_abc_Operation.OpMemGetDouble,format_abc_Operation.OpMemSet8,format_abc_Operation.OpMemSet16,format_abc_Operation.OpMemSet32,format_abc_Operation.OpMemSetFloat,format_abc_Operation.OpMemSetDouble,format_abc_Operation.OpSign1,format_abc_Operation.OpSign8,format_abc_Operation.OpSign16];
-var format_agal_Opcode = $hxClasses["format.agal.Opcode"] = { __ename__ : true, __constructs__ : ["OMov","OAdd","OSub","OMul","ODiv","ORcp","OMin","OMax","OFrc","OSqt","ORsq","OPow","OLog","OExp","ONrm","OSin","OCos","OCrs","ODp3","ODp4","OAbs","ONeg","OSat","OM33","OM44","OM34","ODdx","ODdy","OIfe","OIne","OIfg","OIfl","OEls","OEif","OUnused","OKil","OTex","OSge","OSlt","OSgn","OSeq","OSne"] };
+var format_agal_Opcode = $hxClasses["format.agal.Opcode"] = { __ename__ : ["format","agal","Opcode"], __constructs__ : ["OMov","OAdd","OSub","OMul","ODiv","ORcp","OMin","OMax","OFrc","OSqt","ORsq","OPow","OLog","OExp","ONrm","OSin","OCos","OCrs","ODp3","ODp4","OAbs","ONeg","OSat","OM33","OM44","OM34","ODdx","ODdy","OIfe","OIne","OIfg","OIfl","OEls","OEif","OUnused","OKil","OTex","OSge","OSlt","OSgn","OSeq","OSne"] };
 format_agal_Opcode.OMov = function(dst,v) { var $x = ["OMov",0,dst,v]; $x.__enum__ = format_agal_Opcode; $x.toString = $estr; return $x; };
 format_agal_Opcode.OAdd = function(dst,a,b) { var $x = ["OAdd",1,dst,a,b]; $x.__enum__ = format_agal_Opcode; $x.toString = $estr; return $x; };
 format_agal_Opcode.OSub = function(dst,a,b) { var $x = ["OSub",2,dst,a,b]; $x.__enum__ = format_agal_Opcode; $x.toString = $estr; return $x; };
@@ -1129,7 +1217,7 @@ format_agal_Reg.prototype = {
 	}
 	,__class__: format_agal_Reg
 };
-var format_agal_C = $hxClasses["format.agal.C"] = { __ename__ : true, __constructs__ : ["X","Y","Z","W"] };
+var format_agal_C = $hxClasses["format.agal.C"] = { __ename__ : ["format","agal","C"], __constructs__ : ["X","Y","Z","W"] };
 format_agal_C.X = ["X",0];
 format_agal_C.X.toString = $estr;
 format_agal_C.X.__enum__ = format_agal_C;
@@ -1143,7 +1231,7 @@ format_agal_C.W = ["W",3];
 format_agal_C.W.toString = $estr;
 format_agal_C.W.__enum__ = format_agal_C;
 format_agal_C.__empty_constructs__ = [format_agal_C.X,format_agal_C.Y,format_agal_C.Z,format_agal_C.W];
-var format_agal_RegType = $hxClasses["format.agal.RegType"] = { __ename__ : true, __constructs__ : ["RAttr","RConst","RTemp","ROut","RVar","RTexture","RDepth"] };
+var format_agal_RegType = $hxClasses["format.agal.RegType"] = { __ename__ : ["format","agal","RegType"], __constructs__ : ["RAttr","RConst","RTemp","ROut","RVar","RTexture","RDepth"] };
 format_agal_RegType.RAttr = ["RAttr",0];
 format_agal_RegType.RAttr.toString = $estr;
 format_agal_RegType.RAttr.__enum__ = format_agal_RegType;
@@ -1166,7 +1254,7 @@ format_agal_RegType.RDepth = ["RDepth",6];
 format_agal_RegType.RDepth.toString = $estr;
 format_agal_RegType.RDepth.__enum__ = format_agal_RegType;
 format_agal_RegType.__empty_constructs__ = [format_agal_RegType.RAttr,format_agal_RegType.RConst,format_agal_RegType.RTemp,format_agal_RegType.ROut,format_agal_RegType.RVar,format_agal_RegType.RTexture,format_agal_RegType.RDepth];
-var format_agal_TexFlag = $hxClasses["format.agal.TexFlag"] = { __ename__ : true, __constructs__ : ["T2D","TCube","T3D","TMipMapDisable","TMipMapNearest","TMipMapLinear","TWrap","TClamp","TClampURepeatV","TRepeatUClampV","TFilterNearest","TFilterLinear","TFilterAnisotropic2x","TFilterAnisotropic4x","TFilterAnisotropic8x","TFilterAnisotropic16x","TRgba","TDxt1","TDxt5","TVideo","TCentroid","TSingle","TIgnoreSampler","TLodBias"] };
+var format_agal_TexFlag = $hxClasses["format.agal.TexFlag"] = { __ename__ : ["format","agal","TexFlag"], __constructs__ : ["T2D","TCube","T3D","TMipMapDisable","TMipMapNearest","TMipMapLinear","TWrap","TClamp","TClampURepeatV","TRepeatUClampV","TFilterNearest","TFilterLinear","TFilterAnisotropic2x","TFilterAnisotropic4x","TFilterAnisotropic8x","TFilterAnisotropic16x","TRgba","TDxt1","TDxt5","TVideo","TCentroid","TSingle","TIgnoreSampler","TLodBias"] };
 format_agal_TexFlag.T2D = ["T2D",0];
 format_agal_TexFlag.T2D.toString = $estr;
 format_agal_TexFlag.T2D.__enum__ = format_agal_TexFlag;
@@ -1238,25 +1326,25 @@ format_agal_TexFlag.TIgnoreSampler.toString = $estr;
 format_agal_TexFlag.TIgnoreSampler.__enum__ = format_agal_TexFlag;
 format_agal_TexFlag.TLodBias = function(v) { var $x = ["TLodBias",23,v]; $x.__enum__ = format_agal_TexFlag; $x.toString = $estr; return $x; };
 format_agal_TexFlag.__empty_constructs__ = [format_agal_TexFlag.T2D,format_agal_TexFlag.TCube,format_agal_TexFlag.T3D,format_agal_TexFlag.TMipMapDisable,format_agal_TexFlag.TMipMapNearest,format_agal_TexFlag.TMipMapLinear,format_agal_TexFlag.TWrap,format_agal_TexFlag.TClamp,format_agal_TexFlag.TClampURepeatV,format_agal_TexFlag.TRepeatUClampV,format_agal_TexFlag.TFilterNearest,format_agal_TexFlag.TFilterLinear,format_agal_TexFlag.TFilterAnisotropic2x,format_agal_TexFlag.TFilterAnisotropic4x,format_agal_TexFlag.TFilterAnisotropic8x,format_agal_TexFlag.TFilterAnisotropic16x,format_agal_TexFlag.TRgba,format_agal_TexFlag.TDxt1,format_agal_TexFlag.TDxt5,format_agal_TexFlag.TVideo,format_agal_TexFlag.TCentroid,format_agal_TexFlag.TSingle,format_agal_TexFlag.TIgnoreSampler];
-var format_gif_Block = $hxClasses["format.gif.Block"] = { __ename__ : true, __constructs__ : ["BFrame","BExtension","BEOF"] };
+var format_gif_Block = $hxClasses["format.gif.Block"] = { __ename__ : ["format","gif","Block"], __constructs__ : ["BFrame","BExtension","BEOF"] };
 format_gif_Block.BFrame = function(frame) { var $x = ["BFrame",0,frame]; $x.__enum__ = format_gif_Block; $x.toString = $estr; return $x; };
 format_gif_Block.BExtension = function(extension) { var $x = ["BExtension",1,extension]; $x.__enum__ = format_gif_Block; $x.toString = $estr; return $x; };
 format_gif_Block.BEOF = ["BEOF",2];
 format_gif_Block.BEOF.toString = $estr;
 format_gif_Block.BEOF.__enum__ = format_gif_Block;
 format_gif_Block.__empty_constructs__ = [format_gif_Block.BEOF];
-var format_gif_Extension = $hxClasses["format.gif.Extension"] = { __ename__ : true, __constructs__ : ["EGraphicControl","EComment","EText","EApplicationExtension","EUnknown"] };
+var format_gif_Extension = $hxClasses["format.gif.Extension"] = { __ename__ : ["format","gif","Extension"], __constructs__ : ["EGraphicControl","EComment","EText","EApplicationExtension","EUnknown"] };
 format_gif_Extension.EGraphicControl = function(gce) { var $x = ["EGraphicControl",0,gce]; $x.__enum__ = format_gif_Extension; $x.toString = $estr; return $x; };
 format_gif_Extension.EComment = function(text) { var $x = ["EComment",1,text]; $x.__enum__ = format_gif_Extension; $x.toString = $estr; return $x; };
 format_gif_Extension.EText = function(pte) { var $x = ["EText",2,pte]; $x.__enum__ = format_gif_Extension; $x.toString = $estr; return $x; };
 format_gif_Extension.EApplicationExtension = function(ext) { var $x = ["EApplicationExtension",3,ext]; $x.__enum__ = format_gif_Extension; $x.toString = $estr; return $x; };
 format_gif_Extension.EUnknown = function(id,data) { var $x = ["EUnknown",4,id,data]; $x.__enum__ = format_gif_Extension; $x.toString = $estr; return $x; };
 format_gif_Extension.__empty_constructs__ = [];
-var format_gif_ApplicationExtension = $hxClasses["format.gif.ApplicationExtension"] = { __ename__ : true, __constructs__ : ["AENetscapeLooping","AEUnknown"] };
+var format_gif_ApplicationExtension = $hxClasses["format.gif.ApplicationExtension"] = { __ename__ : ["format","gif","ApplicationExtension"], __constructs__ : ["AENetscapeLooping","AEUnknown"] };
 format_gif_ApplicationExtension.AENetscapeLooping = function(loops) { var $x = ["AENetscapeLooping",0,loops]; $x.__enum__ = format_gif_ApplicationExtension; $x.toString = $estr; return $x; };
 format_gif_ApplicationExtension.AEUnknown = function(name,version,data) { var $x = ["AEUnknown",1,name,version,data]; $x.__enum__ = format_gif_ApplicationExtension; $x.toString = $estr; return $x; };
 format_gif_ApplicationExtension.__empty_constructs__ = [];
-var format_gif_Version = $hxClasses["format.gif.Version"] = { __ename__ : true, __constructs__ : ["GIF87a","GIF89a","Unknown"] };
+var format_gif_Version = $hxClasses["format.gif.Version"] = { __ename__ : ["format","gif","Version"], __constructs__ : ["GIF87a","GIF89a","Unknown"] };
 format_gif_Version.GIF87a = ["GIF87a",0];
 format_gif_Version.GIF87a.toString = $estr;
 format_gif_Version.GIF87a.__enum__ = format_gif_Version;
@@ -1265,7 +1353,7 @@ format_gif_Version.GIF89a.toString = $estr;
 format_gif_Version.GIF89a.__enum__ = format_gif_Version;
 format_gif_Version.Unknown = function(version) { var $x = ["Unknown",2,version]; $x.__enum__ = format_gif_Version; $x.toString = $estr; return $x; };
 format_gif_Version.__empty_constructs__ = [format_gif_Version.GIF87a,format_gif_Version.GIF89a];
-var format_gif_DisposalMethod = $hxClasses["format.gif.DisposalMethod"] = { __ename__ : true, __constructs__ : ["UNSPECIFIED","NO_ACTION","FILL_BACKGROUND","RENDER_PREVIOUS","UNDEFINED"] };
+var format_gif_DisposalMethod = $hxClasses["format.gif.DisposalMethod"] = { __ename__ : ["format","gif","DisposalMethod"], __constructs__ : ["UNSPECIFIED","NO_ACTION","FILL_BACKGROUND","RENDER_PREVIOUS","UNDEFINED"] };
 format_gif_DisposalMethod.UNSPECIFIED = ["UNSPECIFIED",0];
 format_gif_DisposalMethod.UNSPECIFIED.toString = $estr;
 format_gif_DisposalMethod.UNSPECIFIED.__enum__ = format_gif_DisposalMethod;
@@ -1921,7 +2009,7 @@ format_gif_Tools.loopCount = function(data) {
 format_gif_Tools.log2 = function(val) {
 	return Math.log(val) / format_gif_Tools.LN2;
 };
-var format_mp3_SamplingRate = $hxClasses["format.mp3.SamplingRate"] = { __ename__ : true, __constructs__ : ["SR_8000","SR_11025","SR_12000","SR_22050","SR_24000","SR_32000","SR_44100","SR_48000","SR_Bad"] };
+var format_mp3_SamplingRate = $hxClasses["format.mp3.SamplingRate"] = { __ename__ : ["format","mp3","SamplingRate"], __constructs__ : ["SR_8000","SR_11025","SR_12000","SR_22050","SR_24000","SR_32000","SR_44100","SR_48000","SR_Bad"] };
 format_mp3_SamplingRate.SR_8000 = ["SR_8000",0];
 format_mp3_SamplingRate.SR_8000.toString = $estr;
 format_mp3_SamplingRate.SR_8000.__enum__ = format_mp3_SamplingRate;
@@ -1950,7 +2038,7 @@ format_mp3_SamplingRate.SR_Bad = ["SR_Bad",8];
 format_mp3_SamplingRate.SR_Bad.toString = $estr;
 format_mp3_SamplingRate.SR_Bad.__enum__ = format_mp3_SamplingRate;
 format_mp3_SamplingRate.__empty_constructs__ = [format_mp3_SamplingRate.SR_8000,format_mp3_SamplingRate.SR_11025,format_mp3_SamplingRate.SR_12000,format_mp3_SamplingRate.SR_22050,format_mp3_SamplingRate.SR_24000,format_mp3_SamplingRate.SR_32000,format_mp3_SamplingRate.SR_44100,format_mp3_SamplingRate.SR_48000,format_mp3_SamplingRate.SR_Bad];
-var format_mp3_Bitrate = $hxClasses["format.mp3.Bitrate"] = { __ename__ : true, __constructs__ : ["BR_8","BR_16","BR_24","BR_32","BR_40","BR_48","BR_56","BR_64","BR_80","BR_96","BR_112","BR_128","BR_144","BR_160","BR_176","BR_192","BR_224","BR_256","BR_288","BR_320","BR_352","BR_384","BR_416","BR_448","BR_Free","BR_Bad"] };
+var format_mp3_Bitrate = $hxClasses["format.mp3.Bitrate"] = { __ename__ : ["format","mp3","Bitrate"], __constructs__ : ["BR_8","BR_16","BR_24","BR_32","BR_40","BR_48","BR_56","BR_64","BR_80","BR_96","BR_112","BR_128","BR_144","BR_160","BR_176","BR_192","BR_224","BR_256","BR_288","BR_320","BR_352","BR_384","BR_416","BR_448","BR_Free","BR_Bad"] };
 format_mp3_Bitrate.BR_8 = ["BR_8",0];
 format_mp3_Bitrate.BR_8.toString = $estr;
 format_mp3_Bitrate.BR_8.__enum__ = format_mp3_Bitrate;
@@ -2320,7 +2408,7 @@ format_mp3_CEmphasis.num2Enum = function(c) {
 		throw new js__$Boot_HaxeError("assert");
 	}
 };
-var format_mp3_MPEGVersion = $hxClasses["format.mp3.MPEGVersion"] = { __ename__ : true, __constructs__ : ["MPEG_V1","MPEG_V2","MPEG_V25","MPEG_Reserved"] };
+var format_mp3_MPEGVersion = $hxClasses["format.mp3.MPEGVersion"] = { __ename__ : ["format","mp3","MPEGVersion"], __constructs__ : ["MPEG_V1","MPEG_V2","MPEG_V25","MPEG_Reserved"] };
 format_mp3_MPEGVersion.MPEG_V1 = ["MPEG_V1",0];
 format_mp3_MPEGVersion.MPEG_V1.toString = $estr;
 format_mp3_MPEGVersion.MPEG_V1.__enum__ = format_mp3_MPEGVersion;
@@ -2334,7 +2422,7 @@ format_mp3_MPEGVersion.MPEG_Reserved = ["MPEG_Reserved",3];
 format_mp3_MPEGVersion.MPEG_Reserved.toString = $estr;
 format_mp3_MPEGVersion.MPEG_Reserved.__enum__ = format_mp3_MPEGVersion;
 format_mp3_MPEGVersion.__empty_constructs__ = [format_mp3_MPEGVersion.MPEG_V1,format_mp3_MPEGVersion.MPEG_V2,format_mp3_MPEGVersion.MPEG_V25,format_mp3_MPEGVersion.MPEG_Reserved];
-var format_mp3_Layer = $hxClasses["format.mp3.Layer"] = { __ename__ : true, __constructs__ : ["LayerReserved","Layer3","Layer2","Layer1"] };
+var format_mp3_Layer = $hxClasses["format.mp3.Layer"] = { __ename__ : ["format","mp3","Layer"], __constructs__ : ["LayerReserved","Layer3","Layer2","Layer1"] };
 format_mp3_Layer.LayerReserved = ["LayerReserved",0];
 format_mp3_Layer.LayerReserved.toString = $estr;
 format_mp3_Layer.LayerReserved.__enum__ = format_mp3_Layer;
@@ -2348,7 +2436,7 @@ format_mp3_Layer.Layer1 = ["Layer1",3];
 format_mp3_Layer.Layer1.toString = $estr;
 format_mp3_Layer.Layer1.__enum__ = format_mp3_Layer;
 format_mp3_Layer.__empty_constructs__ = [format_mp3_Layer.LayerReserved,format_mp3_Layer.Layer3,format_mp3_Layer.Layer2,format_mp3_Layer.Layer1];
-var format_mp3_ChannelMode = $hxClasses["format.mp3.ChannelMode"] = { __ename__ : true, __constructs__ : ["Stereo","JointStereo","DualChannel","Mono"] };
+var format_mp3_ChannelMode = $hxClasses["format.mp3.ChannelMode"] = { __ename__ : ["format","mp3","ChannelMode"], __constructs__ : ["Stereo","JointStereo","DualChannel","Mono"] };
 format_mp3_ChannelMode.Stereo = ["Stereo",0];
 format_mp3_ChannelMode.Stereo.toString = $estr;
 format_mp3_ChannelMode.Stereo.__enum__ = format_mp3_ChannelMode;
@@ -2362,7 +2450,7 @@ format_mp3_ChannelMode.Mono = ["Mono",3];
 format_mp3_ChannelMode.Mono.toString = $estr;
 format_mp3_ChannelMode.Mono.__enum__ = format_mp3_ChannelMode;
 format_mp3_ChannelMode.__empty_constructs__ = [format_mp3_ChannelMode.Stereo,format_mp3_ChannelMode.JointStereo,format_mp3_ChannelMode.DualChannel,format_mp3_ChannelMode.Mono];
-var format_mp3_Emphasis = $hxClasses["format.mp3.Emphasis"] = { __ename__ : true, __constructs__ : ["NoEmphasis","Ms50_15","CCIT_J17","InvalidEmphasis"] };
+var format_mp3_Emphasis = $hxClasses["format.mp3.Emphasis"] = { __ename__ : ["format","mp3","Emphasis"], __constructs__ : ["NoEmphasis","Ms50_15","CCIT_J17","InvalidEmphasis"] };
 format_mp3_Emphasis.NoEmphasis = ["NoEmphasis",0];
 format_mp3_Emphasis.NoEmphasis.toString = $estr;
 format_mp3_Emphasis.NoEmphasis.__enum__ = format_mp3_Emphasis;
@@ -2376,7 +2464,7 @@ format_mp3_Emphasis.InvalidEmphasis = ["InvalidEmphasis",3];
 format_mp3_Emphasis.InvalidEmphasis.toString = $estr;
 format_mp3_Emphasis.InvalidEmphasis.__enum__ = format_mp3_Emphasis;
 format_mp3_Emphasis.__empty_constructs__ = [format_mp3_Emphasis.NoEmphasis,format_mp3_Emphasis.Ms50_15,format_mp3_Emphasis.CCIT_J17,format_mp3_Emphasis.InvalidEmphasis];
-var format_mp3_FrameType = $hxClasses["format.mp3.FrameType"] = { __ename__ : true, __constructs__ : ["FT_MP3","FT_NONE"] };
+var format_mp3_FrameType = $hxClasses["format.mp3.FrameType"] = { __ename__ : ["format","mp3","FrameType"], __constructs__ : ["FT_MP3","FT_NONE"] };
 format_mp3_FrameType.FT_MP3 = ["FT_MP3",0];
 format_mp3_FrameType.FT_MP3.toString = $estr;
 format_mp3_FrameType.FT_MP3.__enum__ = format_mp3_FrameType;
@@ -2867,7 +2955,7 @@ format_neko_Builtins.prototype = {
 	}
 	,__class__: format_neko_Builtins
 };
-var format_neko_Opcode = $hxClasses["format.neko.Opcode"] = { __ename__ : true, __constructs__ : ["OAccNull","OAccTrue","OAccFalse","OAccThis","OAccInt","OAccStack","OAccGlobal","OAccEnv","OAccField","OAccArray","OAccIndex","OAccBuiltin","OSetStack","OSetGlobal","OSetEnv","OSetField","OSetArray","OSetIndex","OSetThis","OPush","OPop","OCall","OObjCall","OJump","OJumpIf","OJumpIfNot","OTrap","OEndTrap","ORet","OMakeEnv","OMakeArray","OBool","OIsNull","OIsNotNull","OAdd","OSub","OMult","ODiv","OMod","OShl","OShr","OUShr","OOr","OAnd","OXor","OEq","ONeq","OGt","OGte","OLt","OLte","ONot","OTypeOf","OCompare","OHash","ONew","OJumpTable","OApply","OAccStack0","OAccStack1","OAccIndex0","OAccIndex1","OPhysCompare","OTailCall"] };
+var format_neko_Opcode = $hxClasses["format.neko.Opcode"] = { __ename__ : ["format","neko","Opcode"], __constructs__ : ["OAccNull","OAccTrue","OAccFalse","OAccThis","OAccInt","OAccStack","OAccGlobal","OAccEnv","OAccField","OAccArray","OAccIndex","OAccBuiltin","OSetStack","OSetGlobal","OSetEnv","OSetField","OSetArray","OSetIndex","OSetThis","OPush","OPop","OCall","OObjCall","OJump","OJumpIf","OJumpIfNot","OTrap","OEndTrap","ORet","OMakeEnv","OMakeArray","OBool","OIsNull","OIsNotNull","OAdd","OSub","OMult","ODiv","OMod","OShl","OShr","OUShr","OOr","OAnd","OXor","OEq","ONeq","OGt","OGte","OLt","OLte","ONot","OTypeOf","OCompare","OHash","ONew","OJumpTable","OApply","OAccStack0","OAccStack1","OAccIndex0","OAccIndex1","OPhysCompare","OTailCall"] };
 format_neko_Opcode.OAccNull = ["OAccNull",0];
 format_neko_Opcode.OAccNull.toString = $estr;
 format_neko_Opcode.OAccNull.__enum__ = format_neko_Opcode;
@@ -3061,7 +3149,7 @@ format_neko_Opcode.OTailCall = ["OTailCall",63];
 format_neko_Opcode.OTailCall.toString = $estr;
 format_neko_Opcode.OTailCall.__enum__ = format_neko_Opcode;
 format_neko_Opcode.__empty_constructs__ = [format_neko_Opcode.OAccNull,format_neko_Opcode.OAccTrue,format_neko_Opcode.OAccFalse,format_neko_Opcode.OAccThis,format_neko_Opcode.OAccInt,format_neko_Opcode.OAccStack,format_neko_Opcode.OAccGlobal,format_neko_Opcode.OAccEnv,format_neko_Opcode.OAccField,format_neko_Opcode.OAccArray,format_neko_Opcode.OAccIndex,format_neko_Opcode.OAccBuiltin,format_neko_Opcode.OSetStack,format_neko_Opcode.OSetGlobal,format_neko_Opcode.OSetEnv,format_neko_Opcode.OSetField,format_neko_Opcode.OSetArray,format_neko_Opcode.OSetIndex,format_neko_Opcode.OSetThis,format_neko_Opcode.OPush,format_neko_Opcode.OPop,format_neko_Opcode.OCall,format_neko_Opcode.OObjCall,format_neko_Opcode.OJump,format_neko_Opcode.OJumpIf,format_neko_Opcode.OJumpIfNot,format_neko_Opcode.OTrap,format_neko_Opcode.OEndTrap,format_neko_Opcode.ORet,format_neko_Opcode.OMakeEnv,format_neko_Opcode.OMakeArray,format_neko_Opcode.OBool,format_neko_Opcode.OIsNull,format_neko_Opcode.OIsNotNull,format_neko_Opcode.OAdd,format_neko_Opcode.OSub,format_neko_Opcode.OMult,format_neko_Opcode.ODiv,format_neko_Opcode.OMod,format_neko_Opcode.OShl,format_neko_Opcode.OShr,format_neko_Opcode.OUShr,format_neko_Opcode.OOr,format_neko_Opcode.OAnd,format_neko_Opcode.OXor,format_neko_Opcode.OEq,format_neko_Opcode.ONeq,format_neko_Opcode.OGt,format_neko_Opcode.OGte,format_neko_Opcode.OLt,format_neko_Opcode.OLte,format_neko_Opcode.ONot,format_neko_Opcode.OTypeOf,format_neko_Opcode.OCompare,format_neko_Opcode.OHash,format_neko_Opcode.ONew,format_neko_Opcode.OJumpTable,format_neko_Opcode.OApply,format_neko_Opcode.OAccStack0,format_neko_Opcode.OAccStack1,format_neko_Opcode.OAccIndex0,format_neko_Opcode.OAccIndex1,format_neko_Opcode.OPhysCompare,format_neko_Opcode.OTailCall];
-var format_neko_Global = $hxClasses["format.neko.Global"] = { __ename__ : true, __constructs__ : ["GlobalVar","GlobalFunction","GlobalString","GlobalFloat","GlobalDebug"] };
+var format_neko_Global = $hxClasses["format.neko.Global"] = { __ename__ : ["format","neko","Global"], __constructs__ : ["GlobalVar","GlobalFunction","GlobalString","GlobalFloat","GlobalDebug"] };
 format_neko_Global.GlobalVar = function(v) { var $x = ["GlobalVar",0,v]; $x.__enum__ = format_neko_Global; $x.toString = $estr; return $x; };
 format_neko_Global.GlobalFunction = function(pos,nargs) { var $x = ["GlobalFunction",1,pos,nargs]; $x.__enum__ = format_neko_Global; $x.toString = $estr; return $x; };
 format_neko_Global.GlobalString = function(v) { var $x = ["GlobalString",2,v]; $x.__enum__ = format_neko_Global; $x.toString = $estr; return $x; };
@@ -4220,7 +4308,7 @@ format_neko_VM.prototype = {
 	}
 	,__class__: format_neko_VM
 };
-var format_neko_Value = $hxClasses["format.neko.Value"] = { __ename__ : true, __constructs__ : ["VNull","VInt","VFloat","VBool","VString","VObject","VArray","VFunction","VAbstract","VProxy","VProxyFunction"] };
+var format_neko_Value = $hxClasses["format.neko.Value"] = { __ename__ : ["format","neko","Value"], __constructs__ : ["VNull","VInt","VFloat","VBool","VString","VObject","VArray","VFunction","VAbstract","VProxy","VProxyFunction"] };
 format_neko_Value.VNull = ["VNull",0];
 format_neko_Value.VNull.toString = $estr;
 format_neko_Value.VNull.__enum__ = format_neko_Value;
@@ -4247,7 +4335,7 @@ format_neko_ValueObject.prototype = {
 var format_neko_ValueAbstract = function() { };
 $hxClasses["format.neko.ValueAbstract"] = format_neko_ValueAbstract;
 format_neko_ValueAbstract.__name__ = ["format","neko","ValueAbstract"];
-var format_neko_ValueFunction = $hxClasses["format.neko.ValueFunction"] = { __ename__ : true, __constructs__ : ["VFun0","VFun1","VFun2","VFun3","VFun4","VFun5","VFunVar"] };
+var format_neko_ValueFunction = $hxClasses["format.neko.ValueFunction"] = { __ename__ : ["format","neko","ValueFunction"], __constructs__ : ["VFun0","VFun1","VFun2","VFun3","VFun4","VFun5","VFunVar"] };
 format_neko_ValueFunction.VFun0 = function(f) { var $x = ["VFun0",0,f]; $x.__enum__ = format_neko_ValueFunction; $x.toString = $estr; return $x; };
 format_neko_ValueFunction.VFun1 = function(f) { var $x = ["VFun1",1,f]; $x.__enum__ = format_neko_ValueFunction; $x.toString = $estr; return $x; };
 format_neko_ValueFunction.VFun2 = function(f) { var $x = ["VFun2",2,f]; $x.__enum__ = format_neko_ValueFunction; $x.toString = $estr; return $x; };
@@ -4270,14 +4358,14 @@ format_neko_Module.__name__ = ["format","neko","Module"];
 format_neko_Module.prototype = {
 	__class__: format_neko_Module
 };
-var format_png_Color = $hxClasses["format.png.Color"] = { __ename__ : true, __constructs__ : ["ColGrey","ColTrue","ColIndexed"] };
+var format_png_Color = $hxClasses["format.png.Color"] = { __ename__ : ["format","png","Color"], __constructs__ : ["ColGrey","ColTrue","ColIndexed"] };
 format_png_Color.ColGrey = function(alpha) { var $x = ["ColGrey",0,alpha]; $x.__enum__ = format_png_Color; $x.toString = $estr; return $x; };
 format_png_Color.ColTrue = function(alpha) { var $x = ["ColTrue",1,alpha]; $x.__enum__ = format_png_Color; $x.toString = $estr; return $x; };
 format_png_Color.ColIndexed = ["ColIndexed",2];
 format_png_Color.ColIndexed.toString = $estr;
 format_png_Color.ColIndexed.__enum__ = format_png_Color;
 format_png_Color.__empty_constructs__ = [format_png_Color.ColIndexed];
-var format_png_Chunk = $hxClasses["format.png.Chunk"] = { __ename__ : true, __constructs__ : ["CEnd","CHeader","CData","CPalette","CUnknown"] };
+var format_png_Chunk = $hxClasses["format.png.Chunk"] = { __ename__ : ["format","png","Chunk"], __constructs__ : ["CEnd","CHeader","CData","CPalette","CUnknown"] };
 format_png_Chunk.CEnd = ["CEnd",0];
 format_png_Chunk.CEnd.toString = $estr;
 format_png_Chunk.CEnd.__enum__ = format_png_Chunk;
@@ -5514,7 +5602,7 @@ format_tools_Deflate.__name__ = ["format","tools","Deflate"];
 format_tools_Deflate.run = function(b) {
 	throw new js__$Boot_HaxeError("Deflate is not supported on this platform");
 };
-var format_tools_Huffman = $hxClasses["format.tools.Huffman"] = { __ename__ : true, __constructs__ : ["Found","NeedBit","NeedBits"] };
+var format_tools_Huffman = $hxClasses["format.tools.Huffman"] = { __ename__ : ["format","tools","Huffman"], __constructs__ : ["Found","NeedBit","NeedBits"] };
 format_tools_Huffman.Found = function(i) { var $x = ["Found",0,i]; $x.__enum__ = format_tools_Huffman; $x.toString = $estr; return $x; };
 format_tools_Huffman.NeedBit = function(left,right) { var $x = ["NeedBit",1,left,right]; $x.__enum__ = format_tools_Huffman; $x.toString = $estr; return $x; };
 format_tools_Huffman.NeedBits = function(n,table) { var $x = ["NeedBits",2,n,table]; $x.__enum__ = format_tools_Huffman; $x.toString = $estr; return $x; };
@@ -5682,7 +5770,7 @@ format_tools__$InflateImpl_Window.prototype = {
 	}
 	,__class__: format_tools__$InflateImpl_Window
 };
-var format_tools__$InflateImpl_State = $hxClasses["format.tools._InflateImpl.State"] = { __ename__ : true, __constructs__ : ["Head","Block","CData","Flat","Crc","Dist","DistOne","Done"] };
+var format_tools__$InflateImpl_State = $hxClasses["format.tools._InflateImpl.State"] = { __ename__ : ["format","tools","_InflateImpl","State"], __constructs__ : ["Head","Block","CData","Flat","Crc","Dist","DistOne","Done"] };
 format_tools__$InflateImpl_State.Head = ["Head",0];
 format_tools__$InflateImpl_State.Head.toString = $estr;
 format_tools__$InflateImpl_State.Head.__enum__ = format_tools__$InflateImpl_State;
@@ -6021,7 +6109,7 @@ format_tools_InflateImpl.prototype = {
 	}
 	,__class__: format_tools_InflateImpl
 };
-var format_wav_WAVEFormat = $hxClasses["format.wav.WAVEFormat"] = { __ename__ : true, __constructs__ : ["WF_PCM"] };
+var format_wav_WAVEFormat = $hxClasses["format.wav.WAVEFormat"] = { __ename__ : ["format","wav","WAVEFormat"], __constructs__ : ["WF_PCM"] };
 format_wav_WAVEFormat.WF_PCM = ["WF_PCM",0];
 format_wav_WAVEFormat.WF_PCM.toString = $estr;
 format_wav_WAVEFormat.WF_PCM.__enum__ = format_wav_WAVEFormat;
@@ -7305,7 +7393,7 @@ h2d_Bitmap.prototype = $extend(h2d_Drawable.prototype,{
 	}
 	,__class__: h2d_Bitmap
 });
-var h2d_BlendMode = $hxClasses["h2d.BlendMode"] = { __ename__ : true, __constructs__ : ["None","Alpha","Add","SoftAdd","Multiply","Erase","Screen"] };
+var h2d_BlendMode = $hxClasses["h2d.BlendMode"] = { __ename__ : ["h2d","BlendMode"], __constructs__ : ["None","Alpha","Add","SoftAdd","Multiply","Erase","Screen"] };
 h2d_BlendMode.None = ["None",0];
 h2d_BlendMode.None.toString = $estr;
 h2d_BlendMode.None.__enum__ = h2d_BlendMode;
@@ -7328,7 +7416,7 @@ h2d_BlendMode.Screen = ["Screen",6];
 h2d_BlendMode.Screen.toString = $estr;
 h2d_BlendMode.Screen.__enum__ = h2d_BlendMode;
 h2d_BlendMode.__empty_constructs__ = [h2d_BlendMode.None,h2d_BlendMode.Alpha,h2d_BlendMode.Add,h2d_BlendMode.SoftAdd,h2d_BlendMode.Multiply,h2d_BlendMode.Erase,h2d_BlendMode.Screen];
-var h2d_FlowAlign = $hxClasses["h2d.FlowAlign"] = { __ename__ : true, __constructs__ : ["Top","Left","Right","Middle","Bottom"] };
+var h2d_FlowAlign = $hxClasses["h2d.FlowAlign"] = { __ename__ : ["h2d","FlowAlign"], __constructs__ : ["Top","Left","Right","Middle","Bottom"] };
 h2d_FlowAlign.Top = ["Top",0];
 h2d_FlowAlign.Top.toString = $estr;
 h2d_FlowAlign.Top.__enum__ = h2d_FlowAlign;
@@ -8637,7 +8725,7 @@ h2d__$Graphics_GraphicsContent.prototype = $extend(h3d_prim_Primitive.prototype,
 		if(this.index.length <= 0) {
 			return;
 		}
-		this.buffer = h3d_Buffer.ofFloats(this.tmp,8,[h3d_BufferFlag.RawFormat]);
+		this.buffer = h3d_Buffer.ofFloats(this.tmp,8,[h3d_BufferFlag.RawFormat],{ fileName : "Graphics.hx", lineNumber : 62, className : "h2d._Graphics.GraphicsContent", methodName : "alloc"});
 		this.indexes = h3d_Indexes.alloc(this.index);
 		var _g = 0;
 		var _g1 = this.buffers;
@@ -8645,7 +8733,7 @@ h2d__$Graphics_GraphicsContent.prototype = $extend(h3d_prim_Primitive.prototype,
 			var b = _g1[_g];
 			++_g;
 			if(b.vbuf == null || b.vbuf.isDisposed()) {
-				b.vbuf = h3d_Buffer.ofFloats(b.buf,8,[h3d_BufferFlag.RawFormat]);
+				b.vbuf = h3d_Buffer.ofFloats(b.buf,8,[h3d_BufferFlag.RawFormat],{ fileName : "Graphics.hx", lineNumber : 65, className : "h2d._Graphics.GraphicsContent", methodName : "alloc"});
 			}
 			if(b.ibuf == null || b.ibuf.isDisposed()) {
 				b.ibuf = h3d_Indexes.alloc(b.idx);
@@ -8703,7 +8791,7 @@ var h2d_Graphics = function(parent) {
 	this.ma = 1.;
 	h2d_Drawable.call(this,parent);
 	this.content = new h2d__$Graphics_GraphicsContent();
-	this.tile = h2d_Tile.fromColor(16777215);
+	this.tile = h2d_Tile.fromColor(16777215,null,null,null,{ fileName : "Graphics.hx", lineNumber : 132, className : "h2d.Graphics", methodName : "new"});
 	this.clear();
 };
 $hxClasses["h2d.Graphics"] = h2d_Graphics;
@@ -9241,7 +9329,7 @@ h2d_Interactive.prototype = $extend(h2d_Drawable.prototype,{
 	}
 	,draw: function(ctx) {
 		if(this.backgroundColor != null) {
-			this.emitTile(ctx,h2d_Tile.fromColor(this.backgroundColor,this.width | 0,this.height | 0,(this.backgroundColor >>> 24) / 255));
+			this.emitTile(ctx,h2d_Tile.fromColor(this.backgroundColor,this.width | 0,this.height | 0,(this.backgroundColor >>> 24) / 255,{ fileName : "Interactive.hx", lineNumber : 38, className : "h2d.Interactive", methodName : "draw"}));
 		}
 	}
 	,getBoundsRec: function(relativeTo,out,forSize) {
@@ -9687,6 +9775,9 @@ h2d_Mask.prototype = $extend(h2d_Sprite.prototype,{
 	,__class__: h2d_Mask
 });
 var h3d_impl_RenderContext = function() {
+	if(h3d_Engine.CURRENT == null) {
+		throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+	}
 	this.engine = h3d_Engine.CURRENT;
 	this.frame = 0;
 	this.time = 0.;
@@ -9922,7 +10013,7 @@ h2d_RenderContext.prototype = $extend(h3d_impl_RenderContext.prototype,{
 		}
 		this.beforeDraw();
 		var nverts = this.bufPos / this.stride | 0;
-		var tmp = new h3d_Buffer(nverts,this.stride,[h3d_BufferFlag.Quads,h3d_BufferFlag.Dynamic,h3d_BufferFlag.RawFormat]);
+		var tmp = new h3d_Buffer(nverts,this.stride,[h3d_BufferFlag.Quads,h3d_BufferFlag.Dynamic,h3d_BufferFlag.RawFormat],{ fileName : "RenderContext.hx", lineNumber : 190, className : "h2d.RenderContext", methodName : "_flush"});
 		tmp.uploadVector(this.buffer,0,nverts);
 		var _this = this.engine;
 		_this.renderBuffer(tmp,_this.mem.quadIndexes,2,0,-1);
@@ -9932,7 +10023,7 @@ h2d_RenderContext.prototype = $extend(h3d_impl_RenderContext.prototype,{
 	}
 	,beforeDraw: function() {
 		if(this.texture == null) {
-			this.texture = h3d_mat_Texture.fromColor(16711935);
+			this.texture = h3d_mat_Texture.fromColor(16711935,null,{ fileName : "RenderContext.hx", lineNumber : 199, className : "h2d.RenderContext", methodName : "beforeDraw"});
 		}
 		this.baseShader.texture__ = this.texture;
 		this.texture.set_filter((this.currentObj.filter == null?this.defaultFilter:this.currentObj.filter)?h3d_mat_Filter.Linear:h3d_mat_Filter.Nearest);
@@ -10143,7 +10234,7 @@ h2d_RenderContext.prototype = $extend(h3d_impl_RenderContext.prototype,{
 		_this4.w = w1;
 		this.beforeDraw();
 		if(this.fixedBuffer == null || this.fixedBuffer.isDisposed()) {
-			this.fixedBuffer = new h3d_Buffer(4,8,[h3d_BufferFlag.Quads,h3d_BufferFlag.RawFormat]);
+			this.fixedBuffer = new h3d_Buffer(4,8,[h3d_BufferFlag.Quads,h3d_BufferFlag.RawFormat],{ fileName : "RenderContext.hx", lineNumber : 292, className : "h2d.RenderContext", methodName : "drawTile"});
 			var k = new Array(0);
 			var _g = 0;
 			var _g1 = [0,0,0,0,1,1,1,1,0,1,0,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,1];
@@ -10254,6 +10345,9 @@ h2d_TileGroup.prototype = $extend(h2d_Drawable.prototype,{
 		h2d_Drawable.prototype.sync.call(this,ctx);
 		var _this = this.content;
 		if(_this.buffer == null || _this.buffer.isDisposed()) {
+			if(h3d_Engine.CURRENT == null) {
+				throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+			}
 			_this.alloc(h3d_Engine.CURRENT);
 		}
 	}
@@ -10515,6 +10609,9 @@ h3d_IDrawable.prototype = {
 };
 var h2d_Scene = function() {
 	h2d_Layers.call(this,null);
+	if(h3d_Engine.CURRENT == null) {
+		throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+	}
 	var e = h3d_Engine.CURRENT;
 	this.ctx = new h2d_RenderContext(this);
 	this.width = e.width;
@@ -10539,9 +10636,15 @@ h2d_Scene.prototype = $extend(h2d_Layers.prototype,{
 		this.events = events;
 	}
 	,get_zoom: function() {
+		if(h3d_Engine.CURRENT == null) {
+			throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+		}
 		return h3d_Engine.CURRENT.width / this.width | 0;
 	}
 	,set_zoom: function(v) {
+		if(h3d_Engine.CURRENT == null) {
+			throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+		}
 		var e = h3d_Engine.CURRENT;
 		var stage = hxd_Stage.getInstance();
 		var twidth = Math.ceil(stage.get_width() / v);
@@ -10563,6 +10666,9 @@ h2d_Scene.prototype = $extend(h2d_Layers.prototype,{
 	,checkResize: function() {
 		if(this.fixedSize) {
 			return;
+		}
+		if(h3d_Engine.CURRENT == null) {
+			throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
 		}
 		var engine = h3d_Engine.CURRENT;
 		if(this.width != engine.width || this.height != engine.height) {
@@ -10837,6 +10943,9 @@ h2d_Scene.prototype = $extend(h2d_Layers.prototype,{
 		if((t.flags & 1) == 0) {
 			throw new js__$Boot_HaxeError("Can only draw to texture created with Target flag");
 		}
+		if(h3d_Engine.CURRENT == null) {
+			throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+		}
 		this.ctx.engine = h3d_Engine.CURRENT;
 		this.ctx.engine.begin();
 		this.ctx.globalAlpha = this.alpha;
@@ -10874,9 +10983,12 @@ h2d_Scene.prototype = $extend(h2d_Layers.prototype,{
 		h2d_Layers.prototype.sync.call(this,ctx);
 	}
 	,captureBitmap: function(target) {
+		if(h3d_Engine.CURRENT == null) {
+			throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+		}
 		var engine = h3d_Engine.CURRENT;
 		if(target == null) {
-			target = new h2d_Tile(new h3d_mat_Texture(this.width,this.height,[h3d_mat_TextureFlags.Target]),0,0,this.width,this.height);
+			target = new h2d_Tile(new h3d_mat_Texture(this.width,this.height,[h3d_mat_TextureFlags.Target],null,{ fileName : "Scene.hx", lineNumber : 386, className : "h2d.Scene", methodName : "captureBitmap"}),0,0,this.width,this.height);
 		}
 		engine.begin();
 		engine.setRenderZone(target.x,target.y,target.width,target.height);
@@ -10898,7 +11010,7 @@ h2d_Scene.prototype = $extend(h2d_Layers.prototype,{
 	}
 	,__class__: h2d_Scene
 });
-var h2d_Align = $hxClasses["h2d.Align"] = { __ename__ : true, __constructs__ : ["Left","Right","Center"] };
+var h2d_Align = $hxClasses["h2d.Align"] = { __ename__ : ["h2d","Align"], __constructs__ : ["Left","Right","Center"] };
 h2d_Align.Left = ["Left",0];
 h2d_Align.Left.toString = $estr;
 h2d_Align.Left.__enum__ = h2d_Align;
@@ -10968,7 +11080,7 @@ h2d_Text.prototype = $extend(h2d_Drawable.prototype,{
 	}
 	,draw: function(ctx) {
 		if(this.glyphs == null) {
-			this.emitTile(ctx,h2d_Tile.fromColor(16711935,16,16));
+			this.emitTile(ctx,h2d_Tile.fromColor(16711935,16,16,null,{ fileName : "Text.hx", lineNumber : 90, className : "h2d.Text", methodName : "draw"}));
 			return;
 		}
 		if(this.dropShadow != null) {
@@ -11379,7 +11491,7 @@ h2d_Tile.fromTexture = function(t) {
 };
 h2d_Tile.fromPixels = function(pixels,allocPos) {
 	var pix2 = pixels.makeSquare(true);
-	var t = h3d_mat_Texture.fromPixels(pix2);
+	var t = h3d_mat_Texture.fromPixels(pix2,{ fileName : "Tile.hx", lineNumber : 227, className : "h2d.Tile", methodName : "fromPixels"});
 	if(pix2 != pixels) {
 		pix2.dispose();
 	}
@@ -11954,15 +12066,21 @@ h2d__$TileGroup_TileLayerContent.prototype = $extend(h3d_prim_Primitive.prototyp
 		if(this.tmp == null) {
 			this.clear();
 		}
-		this.buffer = h3d_Buffer.ofFloats(this.tmp,8,[h3d_BufferFlag.Quads,h3d_BufferFlag.RawFormat]);
+		this.buffer = h3d_Buffer.ofFloats(this.tmp,8,[h3d_BufferFlag.Quads,h3d_BufferFlag.RawFormat],{ fileName : "TileGroup.hx", lineNumber : 302, className : "h2d._TileGroup.TileLayerContent", methodName : "alloc"});
 	}
 	,flush: function() {
 		if(this.buffer == null || this.buffer.isDisposed()) {
+			if(h3d_Engine.CURRENT == null) {
+				throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+			}
 			this.alloc(h3d_Engine.CURRENT);
 		}
 	}
 	,doRender: function(engine,min,len) {
 		if(this.buffer == null || this.buffer.isDisposed()) {
+			if(h3d_Engine.CURRENT == null) {
+				throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+			}
 			this.alloc(h3d_Engine.CURRENT);
 		}
 		engine.renderQuadBuffer(this.buffer,min,len);
@@ -12497,7 +12615,7 @@ h2d_filter_Filter.prototype = {
 	}
 	,__class__: h2d_filter_Filter
 };
-var h3d_BufferFlag = $hxClasses["h3d.BufferFlag"] = { __ename__ : true, __constructs__ : ["Dynamic","Triangles","Quads","Managed","RawFormat","NoAlloc"] };
+var h3d_BufferFlag = $hxClasses["h3d.BufferFlag"] = { __ename__ : ["h3d","BufferFlag"], __constructs__ : ["Dynamic","Triangles","Quads","Managed","RawFormat","NoAlloc"] };
 h3d_BufferFlag.Dynamic = ["Dynamic",0];
 h3d_BufferFlag.Dynamic.toString = $estr;
 h3d_BufferFlag.Dynamic.__enum__ = h3d_BufferFlag;
@@ -12521,6 +12639,7 @@ var h3d_Buffer = function(vertices,stride,flags,allocPos) {
 	this.id = h3d_Buffer.GUID++;
 	this.vertices = vertices;
 	this.flags = 0;
+	this.allocPos = allocPos;
 	if(flags != null) {
 		var _g = 0;
 		while(_g < flags.length) {
@@ -12533,6 +12652,9 @@ var h3d_Buffer = function(vertices,stride,flags,allocPos) {
 		this.flags |= 8;
 	}
 	if((this.flags & 32) == 0) {
+		if(h3d_Engine.CURRENT == null) {
+			throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+		}
 		h3d_Engine.CURRENT.mem.allocBuffer(this,stride);
 	}
 };
@@ -12719,6 +12841,9 @@ h3d_Camera.prototype = {
 		return p;
 	}
 	,rayFromScreen: function(pixelX,pixelY) {
+		if(h3d_Engine.CURRENT == null) {
+			throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+		}
 		var engine = h3d_Engine.CURRENT;
 		var rx = (pixelX / engine.width - 0.5) * 2;
 		var ry = (0.5 - pixelY / engine.height) * 2;
@@ -12989,8 +13114,14 @@ var h3d_Engine = function(hardware,aa) {
 $hxClasses["h3d.Engine"] = h3d_Engine;
 h3d_Engine.__name__ = ["h3d","Engine"];
 h3d_Engine.check = function() {
+	if(h3d_Engine.CURRENT == null) {
+		throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+	}
 };
 h3d_Engine.getCurrent = function() {
+	if(h3d_Engine.CURRENT == null) {
+		throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+	}
 	return h3d_Engine.CURRENT;
 };
 h3d_Engine.prototype = {
@@ -13254,7 +13385,7 @@ h3d_Engine.prototype = {
 	}
 	,pushTargets: function(textures) {
 		if(this.nullTexture == null) {
-			this.nullTexture = new h3d_mat_Texture(0,0,[h3d_mat_TextureFlags.NoAlloc]);
+			this.nullTexture = new h3d_mat_Texture(0,0,[h3d_mat_TextureFlags.NoAlloc],null,{ fileName : "Engine.hx", lineNumber : 294, className : "h3d.Engine", methodName : "pushTargets"});
 		}
 		this.pushTarget(this.nullTexture);
 		this.driver.setRenderTargets(textures);
@@ -13344,6 +13475,9 @@ h3d_Engine.prototype = {
 	,__class__: h3d_Engine
 };
 var h3d_Indexes = function(count) {
+	if(h3d_Engine.CURRENT == null) {
+		throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+	}
 	this.mem = h3d_Engine.CURRENT.mem;
 	this.count = count;
 	this.mem.allocIndexes(this);
@@ -17608,7 +17742,7 @@ h3d_col_Sphere.prototype = {
 	}
 	,__class__: h3d_col_Sphere
 };
-var h3d_impl_Feature = $hxClasses["h3d.impl.Feature"] = { __ename__ : true, __constructs__ : ["StandardDerivatives","FloatTextures","PerTargetDepthBuffer","TargetUseDefaultDepthBuffer","HardwareAccelerated","FullClearRequired","MultipleRenderTargets"] };
+var h3d_impl_Feature = $hxClasses["h3d.impl.Feature"] = { __ename__ : ["h3d","impl","Feature"], __constructs__ : ["StandardDerivatives","FloatTextures","PerTargetDepthBuffer","TargetUseDefaultDepthBuffer","HardwareAccelerated","FullClearRequired","MultipleRenderTargets"] };
 h3d_impl_Feature.StandardDerivatives = ["StandardDerivatives",0];
 h3d_impl_Feature.StandardDerivatives.toString = $estr;
 h3d_impl_Feature.StandardDerivatives.__enum__ = h3d_impl_Feature;
@@ -17649,6 +17783,9 @@ h3d_impl_Driver.prototype = {
 	,begin: function(frame) {
 	}
 	,log: function(str) {
+		if(this.logEnable) {
+			this.logImpl(str);
+		}
 	}
 	,getNativeShaderCode: function(shader) {
 		return null;
@@ -17904,7 +18041,7 @@ h3d_impl_GlDriver.prototype = $extend(h3d_impl_Driver.prototype,{
 				var t = buf.tex[i];
 				if(t == null || t.t == null && t.realloc == null) {
 					var color = h3d_mat_Defaults.loadingTextureColor;
-					t = h3d_mat_Texture.fromColor(color,(color >>> 24) / 255);
+					t = h3d_mat_Texture.fromColor(color,(color >>> 24) / 255,{ fileName : "GlDriver.hx", lineNumber : 246, className : "h3d.impl.GlDriver", methodName : "uploadBuffer"});
 				}
 				if(t != null && t.t == null && t.realloc != null) {
 					t.alloc();
@@ -18219,7 +18356,7 @@ h3d_impl_GlDriver.prototype = $extend(h3d_impl_Driver.prototype,{
 				switch(_g21) {
 				case "normal":
 					if(m.stride < 6) {
-						throw new js__$Boot_HaxeError("Buffer is missing NORMAL data, set it to RAW format ?");
+						throw new js__$Boot_HaxeError("Buffer is missing NORMAL data, set it to RAW format ?" + Std.string(v.allocPos));
 					}
 					this.gl.vertexAttribPointer(a1.index,a1.size,a1.type,false,m.stride * 4,12);
 					break;
@@ -18228,7 +18365,7 @@ h3d_impl_GlDriver.prototype = $extend(h3d_impl_Driver.prototype,{
 					break;
 				case "uv":
 					if(m.stride < 8) {
-						throw new js__$Boot_HaxeError("Buffer is missing UV data, set it to RAW format ?");
+						throw new js__$Boot_HaxeError("Buffer is missing UV data, set it to RAW format ?" + Std.string(v.allocPos));
 					}
 					this.gl.vertexAttribPointer(a1.index,a1.size,a1.type,false,m.stride * 4,24);
 					break;
@@ -18236,7 +18373,7 @@ h3d_impl_GlDriver.prototype = $extend(h3d_impl_Driver.prototype,{
 					this.gl.vertexAttribPointer(a1.index,a1.size,a1.type,false,m.stride * 4,offset * 4);
 					offset += a1.size;
 					if(offset > m.stride) {
-						throw new js__$Boot_HaxeError("Buffer is missing '" + _g21 + "' data, set it to RAW format ?");
+						throw new js__$Boot_HaxeError("Buffer is missing '" + _g21 + "' data, set it to RAW format ?" + Std.string(v.allocPos));
 					}
 				}
 			}
@@ -18334,6 +18471,542 @@ h3d_impl_GlDriver.prototype = $extend(h3d_impl_Driver.prototype,{
 	}
 	,__class__: h3d_impl_GlDriver
 });
+var h3d_impl_LogDriver = function(driver) {
+	this.logLines = null;
+	this.loggedShaders = new haxe_ds_IntMap();
+	this.d = driver;
+	this.logEnable = true;
+	driver.logEnable = true;
+};
+$hxClasses["h3d.impl.LogDriver"] = h3d_impl_LogDriver;
+h3d_impl_LogDriver.__name__ = ["h3d","impl","LogDriver"];
+h3d_impl_LogDriver.debug = function(f) {
+	if(h3d_Engine.CURRENT == null) {
+		throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+	}
+	var engine = h3d_Engine.CURRENT;
+	var driver = engine.driver;
+	var old = driver.logEnable;
+	engine.setDriver(new h3d_impl_LogDriver(driver));
+	f();
+	driver.logEnable = old;
+	engine.setDriver(driver);
+};
+h3d_impl_LogDriver.__super__ = h3d_impl_Driver;
+h3d_impl_LogDriver.prototype = $extend(h3d_impl_Driver.prototype,{
+	logImpl: function(str) {
+		if(this.logLines == null) {
+			this.d.logImpl(str);
+		} else {
+			this.logLines.push(str);
+		}
+	}
+	,hasFeature: function(f) {
+		return this.d.hasFeature(f);
+	}
+	,isSupportedFormat: function(fmt) {
+		return this.d.isSupportedFormat(fmt);
+	}
+	,isDisposed: function() {
+		return this.d.isDisposed();
+	}
+	,dispose: function() {
+		if(this.logEnable) {
+			this.logImpl("Dispose");
+		}
+		this.d.dispose();
+	}
+	,begin: function(frame) {
+		if(this.logEnable) {
+			this.logImpl("Begin " + frame);
+		}
+		this.d.begin(frame);
+	}
+	,clear: function(color,depth,stencil) {
+		if(this.logEnable) {
+			this.logImpl("Clear color=" + Std.string(color) + " depth=" + depth + " stencil=" + stencil);
+		}
+		this.d.clear(color,depth,stencil);
+	}
+	,captureRenderBuffer: function(pixels) {
+		var str = "CaptureRenderBuffer " + pixels.width + "x" + pixels.height;
+		if(this.logEnable) {
+			this.logImpl(str);
+		}
+		this.d.captureRenderBuffer(pixels);
+	}
+	,getDriverName: function(details) {
+		return this.d.getDriverName(details);
+	}
+	,init: function(onCreate,forceSoftware) {
+		if(forceSoftware == null) {
+			forceSoftware = false;
+		}
+		var _gthis = this;
+		if(this.logEnable) {
+			this.logImpl("Init");
+		}
+		this.d.init(function(b) {
+			if(_gthis.logEnable) {
+				_gthis.logImpl("OnCreate " + (b == null?"null":"" + b));
+			}
+			onCreate(b);
+		},forceSoftware);
+	}
+	,resize: function(width,height) {
+		if(this.logEnable) {
+			this.logImpl("Resize " + width + " x " + height);
+		}
+		this.d.resize(width,height);
+	}
+	,selectShader: function(shader) {
+		var str = "Select shader #" + shader.id;
+		if(this.logEnable) {
+			this.logImpl(str);
+		}
+		this.currentShader = shader;
+		var ret = this.d.selectShader(shader);
+		if(!this.loggedShaders.h[shader.id]) {
+			var fmt = function(shader1) {
+				var str1 = hxsl_Printer.shaderToString(shader1.data);
+				str1 = new EReg("((fragment)|(vertex))Globals\\[([0-9]+)\\](.[xyz]+)?","g").map(str1,function(r) {
+					var name = null;
+					var cid = Std.parseInt(r.matched(4)) << 2;
+					var swiz = r.matched(5);
+					if(swiz != null) {
+						var d = HxOverrides.cca(swiz,1) - 120;
+						cid += d;
+						var _g = [];
+						var _g2 = 1;
+						var _g1 = swiz.length;
+						while(_g2 < _g1) _g.push(String.fromCharCode(HxOverrides.cca(swiz,_g2++) - d));
+						swiz = "." + _g.join("");
+					}
+					var g = shader1.globals;
+					while(g != null) {
+						var tmp;
+						var tmp1;
+						if(g.path == "__consts__" && cid >= g.pos) {
+							var _g3 = g.type;
+							tmp1 = cid < g.pos + _g3[1] == 14?_g3[2][1] == 3?_g3[3][1] == 0?_g3[3][2]:0:0:0;
+						} else {
+							tmp1 = false;
+						}
+						if(tmp1) {
+							tmp = swiz == ".x";
+						} else {
+							tmp = false;
+						}
+						if(tmp) {
+							swiz = null;
+							name = "" + shader1.consts[cid - g.pos];
+							break;
+						}
+						if(g.pos == cid) {
+							name = g.path;
+							break;
+						}
+						g = g.next;
+					}
+					if(name == null) {
+						return r.matched(0);
+					}
+					if(swiz != null) {
+						name += swiz;
+					}
+					return name;
+				});
+				str1 = new EReg("((fragment)|(vertex))Params\\[([0-9]+)\\](.[xyz]+)?","g").map(str1,function(r1) {
+					var name1 = null;
+					var cid1 = Std.parseInt(r1.matched(4)) << 2;
+					var swiz1 = r1.matched(5);
+					if(swiz1 != null) {
+						var d1 = HxOverrides.cca(swiz1,1) - 120;
+						cid1 += d1;
+						var _g4 = [];
+						var _g21 = 1;
+						var _g11 = swiz1.length;
+						while(_g21 < _g11) _g4.push(String.fromCharCode(HxOverrides.cca(swiz1,_g21++) - d1));
+						swiz1 = "." + _g4.join("");
+					}
+					var p = shader1.params;
+					while(p != null) {
+						if(p.pos == cid1) {
+							name1 = p.name;
+							break;
+						}
+						p = p.next;
+					}
+					if(name1 == null) {
+						return r1.matched(0);
+					}
+					if(swiz1 != null) {
+						name1 += swiz1;
+					}
+					return name1;
+				});
+				str1 = new EReg("((fragment)|(vertex))Textures\\[([0-9]+)\\]","g").map(str1,function(r2) {
+					var cid2 = Std.parseInt(r2.matched(4));
+					var t = shader1.textures2D;
+					while(t != null) {
+						if(t.pos == cid2) {
+							return t.name;
+						}
+						t = t.next;
+					}
+					return r2.matched(0);
+				});
+				str1 = new EReg("((fragment)|(vertex))TexturesCube\\[([0-9]+)\\]","g").map(str1,function(r3) {
+					var cid3 = Std.parseInt(r3.matched(4));
+					var t1 = shader1.texturesCube;
+					while(t1 != null) {
+						if(t1.pos == cid3) {
+							return t1.name;
+						}
+						t1 = t1.next;
+					}
+					return r3.matched(0);
+				});
+				return str1;
+			};
+			var str2 = fmt(shader.vertex) + "\n" + fmt(shader.fragment);
+			if(this.logEnable) {
+				this.logImpl("");
+			}
+			if(this.logEnable) {
+				this.logImpl("HXSL=");
+			}
+			var str3 = "\t" + str2.split("\n").join("\n\t");
+			if(this.logEnable) {
+				this.logImpl(str3);
+			}
+			var str4 = this.getNativeShaderCode(shader);
+			if(str4 != null) {
+				if(this.logEnable) {
+					this.logImpl("NATIVE=");
+				}
+				var str5 = "\t" + str4.split("\n").join("\n\t");
+				if(this.logEnable) {
+					this.logImpl(str5);
+				}
+			}
+			if(this.logEnable) {
+				this.logImpl("");
+			}
+			this.loggedShaders.h[shader.id] = true;
+		}
+		return ret;
+	}
+	,getNativeShaderCode: function(shader) {
+		return this.d.getNativeShaderCode(shader);
+	}
+	,selectMaterial: function(pass) {
+		var str = "Select Material Cull=" + Std.string(pass.culling) + " depth=" + Std.string(pass.depthTest) + (pass.depthWrite?"":" nowrite") + " blend=" + Std.string(pass.blendSrc) + "," + Std.string(pass.blendDst) + " color=" + pass.colorMask;
+		if(this.logEnable) {
+			this.logImpl(str);
+		}
+		this.d.selectMaterial(pass);
+	}
+	,sizeOf: function(t) {
+		switch(t[1]) {
+		case 0:
+			return 0;
+		case 1:case 3:
+			return 1;
+		case 5:
+			return t[2];
+		case 6:
+			return 9;
+		case 7:
+			return 16;
+		case 8:
+			return 12;
+		case 14:
+			if(t[3][1] == 0) {
+				return this.sizeOf(t[2]) * t[3][2];
+			} else {
+				throw new js__$Boot_HaxeError("assert " + Std.string(t));
+			}
+			break;
+		default:
+			throw new js__$Boot_HaxeError("assert " + Std.string(t));
+		}
+	}
+	,uploadShaderBuffers: function(buffers,which) {
+		var _gthis = this;
+		switch(which) {
+		case 0:
+			var s = this.currentShader.vertex;
+			var buf = buffers.vertex;
+			if(s.globalsSize != 0) {
+				var str = "Upload " + (s.vertex?"vertex":"fragment") + " globals";
+				if(_gthis.logEnable) {
+					_gthis.logImpl(str);
+				}
+				var g = s.globals;
+				while(g != null) {
+					var tmp = "\t@" + g.pos + " " + g.path + "=";
+					var _g = [];
+					var _g2 = 0;
+					var _g1 = _gthis.sizeOf(g.type);
+					while(_g2 < _g1) _g.push(hxd_Math.fmt(buf.globals[g.pos + _g2++]));
+					var str1 = tmp + Std.string(_g);
+					if(_gthis.logEnable) {
+						_gthis.logImpl(str1);
+					}
+					g = g.next;
+				}
+			}
+			var s1 = this.currentShader.fragment;
+			var buf1 = buffers.fragment;
+			if(s1.globalsSize != 0) {
+				var str2 = "Upload " + (s1.vertex?"vertex":"fragment") + " globals";
+				if(_gthis.logEnable) {
+					_gthis.logImpl(str2);
+				}
+				var g1 = s1.globals;
+				while(g1 != null) {
+					var tmp1 = "\t@" + g1.pos + " " + g1.path + "=";
+					var _g3 = [];
+					var _g21 = 0;
+					var _g11 = _gthis.sizeOf(g1.type);
+					while(_g21 < _g11) _g3.push(hxd_Math.fmt(buf1.globals[g1.pos + _g21++]));
+					var str3 = tmp1 + Std.string(_g3);
+					if(_gthis.logEnable) {
+						_gthis.logImpl(str3);
+					}
+					g1 = g1.next;
+				}
+			}
+			break;
+		case 1:
+			var s2 = this.currentShader.vertex;
+			var buf2 = buffers.vertex;
+			if(s2.paramsSize != 0) {
+				var str4 = "Upload " + (s2.vertex?"vertex":"fragment") + " params";
+				if(_gthis.logEnable) {
+					_gthis.logImpl(str4);
+				}
+				var p = s2.params;
+				while(p != null) {
+					var tmp2 = "\t@" + p.pos + " " + p.name + "=";
+					var _g4 = [];
+					var _g22 = 0;
+					var _g12 = _gthis.sizeOf(p.type);
+					while(_g22 < _g12) _g4.push(hxd_Math.fmt(buf2.params[p.pos + _g22++]));
+					var str5 = tmp2 + Std.string(_g4);
+					if(_gthis.logEnable) {
+						_gthis.logImpl(str5);
+					}
+					p = p.next;
+				}
+			}
+			var s3 = this.currentShader.fragment;
+			var buf3 = buffers.fragment;
+			if(s3.paramsSize != 0) {
+				var str6 = "Upload " + (s3.vertex?"vertex":"fragment") + " params";
+				if(_gthis.logEnable) {
+					_gthis.logImpl(str6);
+				}
+				var p1 = s3.params;
+				while(p1 != null) {
+					var tmp3 = "\t@" + p1.pos + " " + p1.name + "=";
+					var _g5 = [];
+					var _g23 = 0;
+					var _g13 = _gthis.sizeOf(p1.type);
+					while(_g23 < _g13) _g5.push(hxd_Math.fmt(buf3.params[p1.pos + _g23++]));
+					var str7 = tmp3 + Std.string(_g5);
+					if(_gthis.logEnable) {
+						_gthis.logImpl(str7);
+					}
+					p1 = p1.next;
+				}
+			}
+			break;
+		case 2:
+			var s4 = this.currentShader.vertex;
+			var buf4 = buffers.vertex;
+			var t = s4.textures2D;
+			while(t != null) {
+				var str8 = "Set " + (s4.vertex?"Vertex":"Fragment") + " Texture@" + t.pos + " " + t.name + "=" + _gthis.textureInfos(buf4.tex,t.pos);
+				if(_gthis.logEnable) {
+					_gthis.logImpl(str8);
+				}
+				t = t.next;
+			}
+			t = s4.texturesCube;
+			while(t != null) {
+				var str9 = "Set " + (s4.vertex?"Vertex":"Fragment") + " TextureCube@" + t.pos + " " + t.name + "=" + _gthis.textureInfos(buf4.tex,t.pos + s4.textures2DCount);
+				if(_gthis.logEnable) {
+					_gthis.logImpl(str9);
+				}
+				t = t.next;
+			}
+			var s5 = this.currentShader.fragment;
+			var buf5 = buffers.fragment;
+			var t1 = s5.textures2D;
+			while(t1 != null) {
+				var str10 = "Set " + (s5.vertex?"Vertex":"Fragment") + " Texture@" + t1.pos + " " + t1.name + "=" + _gthis.textureInfos(buf5.tex,t1.pos);
+				if(_gthis.logEnable) {
+					_gthis.logImpl(str10);
+				}
+				t1 = t1.next;
+			}
+			t1 = s5.texturesCube;
+			while(t1 != null) {
+				var str11 = "Set " + (s5.vertex?"Vertex":"Fragment") + " TextureCube@" + t1.pos + " " + t1.name + "=" + _gthis.textureInfos(buf5.tex,t1.pos + s5.textures2DCount);
+				if(_gthis.logEnable) {
+					_gthis.logImpl(str11);
+				}
+				t1 = t1.next;
+			}
+			break;
+		}
+		this.d.uploadShaderBuffers(buffers,which);
+	}
+	,textureInfos: function(buf,tid) {
+		if(tid < 0 || tid >= buf.length) {
+			return "OUT OF BOUNDS";
+		}
+		var t = buf[tid];
+		if(t == null) {
+			return "NULL";
+		}
+		var inf = "" + Std.string(t);
+		if(t.wrap != h3d_mat_Wrap.Clamp) {
+			inf += " wrap=" + Std.string(t.wrap);
+		}
+		if(t.mipMap != h3d_mat_MipMap.None) {
+			inf += " mip=" + Std.string(t.mipMap);
+		}
+		return inf;
+	}
+	,getShaderInputNames: function() {
+		return this.d.getShaderInputNames();
+	}
+	,selectBuffer: function(buffer) {
+		if(this.logEnable) {
+			this.logImpl("SelectBuffer");
+		}
+		this.d.selectBuffer(buffer);
+	}
+	,selectMultiBuffers: function(buffers) {
+		if(this.logEnable) {
+			this.logImpl("SelectMultiBuffers");
+		}
+		this.d.selectMultiBuffers(buffers);
+	}
+	,draw: function(ibuf,startIndex,ntriangles) {
+		if(this.logEnable) {
+			this.logImpl("Draw " + ntriangles);
+		}
+		this.d.draw(ibuf,startIndex,ntriangles);
+	}
+	,setRenderZone: function(x,y,width,height) {
+		if(this.logEnable) {
+			this.logImpl("SetRenderZone [" + x + " " + y + " " + width + " " + height + "]");
+		}
+		this.d.setRenderZone(x,y,width,height);
+	}
+	,setRenderTarget: function(tex) {
+		if(this.logEnable) {
+			this.logImpl("SetRenderTarget " + Std.string(tex));
+		}
+		this.d.setRenderTarget(tex);
+	}
+	,setRenderTargets: function(textures) {
+		if(this.logEnable) {
+			this.logImpl("SetRenderTargets " + Std.string(textures));
+		}
+		this.d.setRenderTargets(textures);
+	}
+	,present: function() {
+		if(this.logEnable) {
+			this.logImpl("Present");
+		}
+		this.d.present();
+	}
+	,setDebug: function(b) {
+		if(this.logEnable) {
+			this.logImpl("SetDebug " + (b == null?"null":"" + b));
+		}
+		this.d.setDebug(b);
+	}
+	,allocTexture: function(t) {
+		if(this.logEnable) {
+			this.logImpl("AllocTexture " + Std.string(t));
+		}
+		return this.d.allocTexture(t);
+	}
+	,allocIndexes: function(count) {
+		if(this.logEnable) {
+			this.logImpl("AllocIndexes " + count);
+		}
+		return this.d.allocIndexes(count);
+	}
+	,allocVertexes: function(m) {
+		var str = "AllocVertexes size=" + m.size + " stride=" + m.stride;
+		if(this.logEnable) {
+			this.logImpl(str);
+		}
+		return this.d.allocVertexes(m);
+	}
+	,disposeTexture: function(t) {
+		if(this.logEnable) {
+			this.logImpl("Dispose texture");
+		}
+		this.d.disposeTexture(t);
+	}
+	,disposeIndexes: function(i) {
+		if(this.logEnable) {
+			this.logImpl("DisposeIndexes");
+		}
+		this.d.disposeIndexes(i);
+	}
+	,disposeVertexes: function(v) {
+		if(this.logEnable) {
+			this.logImpl("DisposeIndexes");
+		}
+		this.d.disposeVertexes(v);
+	}
+	,uploadIndexBuffer: function(i,startIndice,indiceCount,buf,bufPos) {
+		if(this.logEnable) {
+			this.logImpl("UploadIndexBuffer");
+		}
+		this.d.uploadIndexBuffer(i,startIndice,indiceCount,buf,bufPos);
+	}
+	,uploadIndexBytes: function(i,startIndice,indiceCount,buf,bufPos) {
+		if(this.logEnable) {
+			this.logImpl("UploadIndexBytes");
+		}
+		this.d.uploadIndexBytes(i,startIndice,indiceCount,buf,bufPos);
+	}
+	,uploadVertexBuffer: function(v,startVertex,vertexCount,buf,bufPos) {
+		if(this.logEnable) {
+			this.logImpl("UploadVertexBuffer");
+		}
+		this.d.uploadVertexBuffer(v,startVertex,vertexCount,buf,bufPos);
+	}
+	,uploadVertexBytes: function(v,startVertex,vertexCount,buf,bufPos) {
+		if(this.logEnable) {
+			this.logImpl("UploadVertexBytes");
+		}
+		this.d.uploadVertexBytes(v,startVertex,vertexCount,buf,bufPos);
+	}
+	,uploadTextureBitmap: function(t,bmp,mipLevel,side) {
+		if(this.logEnable) {
+			this.logImpl("UploadTextureBitmap " + Std.string(t) + " mip=" + mipLevel + " side=" + side);
+		}
+		this.d.uploadTextureBitmap(t,bmp,mipLevel,side);
+	}
+	,uploadTexturePixels: function(t,pixels,mipLevel,side) {
+		if(this.logEnable) {
+			this.logImpl("UploadTexturePixels " + Std.string(t) + " mip=" + mipLevel + " side=" + side);
+		}
+		this.d.uploadTexturePixels(t,pixels,mipLevel,side);
+	}
+	,__class__: h3d_impl_LogDriver
+});
 var h3d_impl__$ManagedBuffer_FreeCell = function(pos,count,next) {
 	this.pos = pos;
 	this.count = count;
@@ -18357,6 +19030,9 @@ var h3d_impl_ManagedBuffer = function(stride,size,flags) {
 	this.size = size;
 	this.stride = stride;
 	this.freeList = new h3d_impl__$ManagedBuffer_FreeCell(0,size,null);
+	if(h3d_Engine.CURRENT == null) {
+		throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+	}
 	this.mem = h3d_Engine.CURRENT.mem;
 	this.mem.allocManaged(this);
 };
@@ -18380,9 +19056,11 @@ h3d_impl_ManagedBuffer.prototype = {
 		if(p < 0) {
 			return null;
 		}
-		var b = new h3d_Buffer(vertices,this.stride,[h3d_BufferFlag.NoAlloc]);
+		var b = new h3d_Buffer(vertices,this.stride,[h3d_BufferFlag.NoAlloc],{ fileName : "ManagedBuffer.hx", lineNumber : 56, className : "h3d.impl.ManagedBuffer", methodName : "alloc"});
 		b.position = p;
 		b.buffer = this;
+		b.allocNext = this.allocHead;
+		this.allocHead = b;
 		return b;
 	}
 	,getFreeVertices: function() {
@@ -18426,6 +19104,8 @@ h3d_impl_ManagedBuffer.prototype = {
 		}
 		b.position = p;
 		b.buffer = this;
+		b.allocNext = this.allocHead;
+		this.allocHead = b;
 		return true;
 	}
 	,freeBuffer: function(b) {
@@ -18463,6 +19143,20 @@ h3d_impl_ManagedBuffer.prototype = {
 		}
 		if(nvert != 0) {
 			throw new js__$Boot_HaxeError("assert");
+		}
+		var cur = this.allocHead;
+		var prev1 = null;
+		while(cur != null) {
+			if(cur == b) {
+				if(prev1 == null) {
+					this.allocHead = b.allocNext;
+				} else {
+					prev1.allocNext = b.allocNext;
+				}
+				break;
+			}
+			prev1 = cur;
+			cur = cur.allocNext;
 		}
 		if(this.freeList.count == this.size && (this.flags & 8) == 0) {
 			this.dispose();
@@ -18563,6 +19257,22 @@ h3d_impl_MemoryManager.prototype = {
 		m.vbuf = null;
 		this.usedMemory -= m.size * m.stride * 4;
 		this.bufferCount--;
+		if((m.flags & 8) == 0) {
+			var c = this.buffers[0];
+			var prev = null;
+			while(c != null) {
+				if(c == m) {
+					if(prev == null) {
+						this.buffers[0] = m.next;
+					} else {
+						prev.next = m.next;
+					}
+					break;
+				}
+				prev = c;
+				c = c.next;
+			}
+		}
 	}
 	,allocBuffer: function(b,stride) {
 		var max = (b.flags & 4) != 0?65532:(b.flags & 2) != 0?65533:65534;
@@ -18585,35 +19295,38 @@ h3d_impl_MemoryManager.prototype = {
 					flags.push(f);
 				}
 			}
-			n.next = new h3d_Buffer(rem,stride,flags);
+			n.next = new h3d_Buffer(rem,stride,flags,{ fileName : "MemoryManager.hx", lineNumber : 143, className : "h3d.impl.MemoryManager", methodName : "allocBuffer"});
 			return;
 		}
 		if((b.flags & 8) == 0) {
-			if(!new h3d_impl_ManagedBuffer(stride,b.vertices).allocBuffer(b)) {
+			var m = new h3d_impl_ManagedBuffer(stride,b.vertices);
+			m.next = this.buffers[0];
+			this.buffers[0] = m;
+			if(!m.allocBuffer(b)) {
 				throw new js__$Boot_HaxeError("assert");
 			}
 			return;
 		}
-		var m = this.buffers[stride];
+		var m1 = this.buffers[stride];
 		var prev = null;
-		while(m != null) {
-			if(m.allocBuffer(b)) {
+		while(m1 != null) {
+			if(m1.allocBuffer(b)) {
 				return;
 			}
-			prev = m;
-			m = m.next;
+			prev = m1;
+			m1 = m1.next;
 		}
 		var align = (b.flags & 2) != 0?3:(b.flags & 4) != 0?4:0;
-		if(m == null && align > 0) {
+		if(m1 == null && align > 0) {
 			var total = b.vertices;
 			var size = total;
 			while(size > 2048) {
-				m = this.buffers[stride];
+				m1 = this.buffers[stride];
 				size >>= 1;
 				size -= size % align;
 				b.vertices = size;
-				while(m != null) {
-					if(m.allocBuffer(b)) {
+				while(m1 != null) {
+					if(m1.allocBuffer(b)) {
 						var flags1 = [];
 						var _g2 = 0;
 						var _g11 = h3d_impl_MemoryManager.ALL_FLAGS;
@@ -18624,21 +19337,21 @@ h3d_impl_MemoryManager.prototype = {
 								flags1.push(f1);
 							}
 						}
-						b.next = new h3d_Buffer(total - size,stride,flags1);
+						b.next = new h3d_Buffer(total - size,stride,flags1,{ fileName : "MemoryManager.hx", lineNumber : 182, className : "h3d.impl.MemoryManager", methodName : "allocBuffer"});
 						return;
 					}
-					m = m.next;
+					m1 = m1.next;
 				}
 			}
 			b.vertices = total;
 		}
-		m = new h3d_impl_ManagedBuffer(stride,65533,[h3d_BufferFlag.Managed]);
+		m1 = new h3d_impl_ManagedBuffer(stride,65533,[h3d_BufferFlag.Managed]);
 		if(prev == null) {
-			this.buffers[stride] = m;
+			this.buffers[stride] = m1;
 		} else {
-			prev.next = m;
+			prev.next = m1;
 		}
-		if(!m.allocBuffer(b)) {
+		if(!m1.allocBuffer(b)) {
 			throw new js__$Boot_HaxeError("assert");
 		}
 	}
@@ -18669,7 +19382,17 @@ h3d_impl_MemoryManager.prototype = {
 			if(t.realloc == null) {
 				continue;
 			}
-			if(force || t.lastFrame < h3d_Engine.CURRENT.frameCount - 3600) {
+			var tmp;
+			if(!force) {
+				var tmp1 = t.lastFrame;
+				if(h3d_Engine.CURRENT == null) {
+					throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+				}
+				tmp = tmp1 < h3d_Engine.CURRENT.frameCount - 3600;
+			} else {
+				tmp = true;
+			}
+			if(tmp) {
 				t.dispose();
 				return true;
 			}
@@ -18779,13 +19502,549 @@ h3d_impl_MemoryManager.prototype = {
 		return { bufferCount : this.bufferCount, freeManagedMemory : free, managedMemory : total, totalMemory : this.usedMemory + this.texMemory, textureCount : this.textures.length, textureMemory : this.texMemory};
 	}
 	,allocStats: function() {
-		return [];
+		var h = new haxe_ds_StringMap();
+		var all = [];
+		var _g = 0;
+		var _g1 = this.textures;
+		while(_g < _g1.length) {
+			var t = _g1[_g];
+			++_g;
+			var key = "$" + t.allocPos.fileName + ":" + t.allocPos.lineNumber;
+			var inf = __map_reserved[key] != null?h.getReserved(key):h.h[key];
+			if(inf == null) {
+				inf = { file : t.allocPos.fileName, line : t.allocPos.lineNumber, count : 0, size : 0, tex : true};
+				if(__map_reserved[key] != null) {
+					h.setReserved(key,inf);
+				} else {
+					h.h[key] = inf;
+				}
+				all.push(inf);
+			}
+			inf.count++;
+			inf.size += t.width * t.height * this.bpp(t);
+		}
+		var _g2 = 0;
+		var _g11 = this.buffers;
+		while(_g2 < _g11.length) {
+			var buf = _g11[_g2];
+			++_g2;
+			var buf1 = buf;
+			while(buf1 != null) {
+				var b = buf1.allocHead;
+				while(b != null) {
+					var key1 = b.allocPos.fileName + ":" + b.allocPos.lineNumber;
+					var inf1 = __map_reserved[key1] != null?h.getReserved(key1):h.h[key1];
+					if(inf1 == null) {
+						inf1 = { file : b.allocPos.fileName, line : b.allocPos.lineNumber, count : 0, size : 0, tex : false};
+						if(__map_reserved[key1] != null) {
+							h.setReserved(key1,inf1);
+						} else {
+							h.h[key1] = inf1;
+						}
+						all.push(inf1);
+					}
+					inf1.count++;
+					inf1.size += b.vertices * b.buffer.stride * 4;
+					b = b.allocNext;
+				}
+				buf1 = buf1.next;
+			}
+		}
+		all.sort(function(a,b1) {
+			if(a.size == b1.size) {
+				return a.line - b1.line;
+			} else {
+				return b1.size - a.size;
+			}
+		});
+		return all;
 	}
 	,__class__: h3d_impl_MemoryManager
 };
+var h3d_impl_ScnDriver = function(driver) {
+	this.frame = 0;
+	this.UID = 0;
+	this.d = driver;
+	this.ops = [];
+	this.tmpPass = new h3d_mat_Pass("");
+	this.tmpShader = new hxsl_RuntimeShader();
+	var s = this.tmpShader;
+	s.vertex = new hxsl_RuntimeShaderData();
+	s.fragment = new hxsl_RuntimeShaderData();
+	s.vertex.globalsSize = 0;
+	s.vertex.paramsSize = 0;
+	s.fragment.globalsSize = 0;
+	s.fragment.paramsSize = 0;
+	s.vertex.textures2DCount = s.vertex.texturesCubeCount = 0;
+	s.fragment.textures2DCount = s.fragment.texturesCubeCount = 0;
+	this.tmpBytes = new haxe_io_Bytes(new ArrayBuffer(655536));
+	this.tmpBuf = new h3d_shader_Buffers(s);
+	this.tmpVBuf = new h3d_Buffer(0,0,[h3d_BufferFlag.NoAlloc],{ fileName : "ScnDriver.hx", lineNumber : 42, className : "h3d.impl.ScnDriver", methodName : "new"});
+	this.logEnable = true;
+	this.savedShaders = new haxe_ds_IntMap();
+	this.textureMap = new haxe_ds_IntMap();
+	this.vertexBuffers = [];
+	this.indexBuffers = [];
+	this.indexMap = new haxe_ds_ObjectMap();
+	this.vertexMap = new haxe_ds_ObjectMap();
+	this.vertexStride = [];
+};
+$hxClasses["h3d.impl.ScnDriver"] = h3d_impl_ScnDriver;
+h3d_impl_ScnDriver.__name__ = ["h3d","impl","ScnDriver"];
+h3d_impl_ScnDriver.__super__ = h3d_impl_Driver;
+h3d_impl_ScnDriver.prototype = $extend(h3d_impl_Driver.prototype,{
+	getDriver: function() {
+		return this.d;
+	}
+	,getBytes: function() {
+		return new hxd_fmt_scn_Writer().write({ version : 1, ops : this.ops});
+	}
+	,logImpl: function(str) {
+		this.ops.push(hxd_fmt_scn_Operation.Log(str));
+	}
+	,hasFeature: function(f) {
+		return this.d.hasFeature(f);
+	}
+	,isSupportedFormat: function(fmt) {
+		return this.d.isSupportedFormat(fmt);
+	}
+	,isDisposed: function() {
+		return this.d.isDisposed();
+	}
+	,dispose: function() {
+		this.d.dispose();
+	}
+	,begin: function(frame) {
+		this.ops.push(hxd_fmt_scn_Operation.Begin);
+		this.d.begin(frame);
+	}
+	,clear: function(color,depth,stencil) {
+		this.ops.push(hxd_fmt_scn_Operation.Clear(color,depth,stencil));
+		this.d.clear(color,depth,stencil);
+	}
+	,captureRenderBuffer: function(pixels) {
+		this.d.captureRenderBuffer(pixels);
+	}
+	,getDriverName: function(details) {
+		return this.d.getDriverName(details);
+	}
+	,init: function(onCreate,forceSoftware) {
+		if(forceSoftware == null) {
+			forceSoftware = false;
+		}
+		this.d.init(function(b) {
+			onCreate(b);
+		},forceSoftware);
+	}
+	,resize: function(width,height) {
+		this.ops.push(hxd_fmt_scn_Operation.Resize(width,height));
+		this.d.resize(width,height);
+	}
+	,selectShader: function(shader) {
+		if(this.savedShaders.h[shader.id] != null) {
+			this.ops.push(hxd_fmt_scn_Operation.SelectShader(shader.id,null));
+		} else {
+			var s = new haxe_Serializer();
+			s.useCache = true;
+			s.serialize(shader);
+			this.ops.push(hxd_fmt_scn_Operation.SelectShader(shader.id,haxe_io_Bytes.ofString(s.toString())));
+			this.savedShaders.h[shader.id] = shader;
+		}
+		return this.d.selectShader(shader);
+	}
+	,getNativeShaderCode: function(shader) {
+		return this.d.getNativeShaderCode(shader);
+	}
+	,selectMaterial: function(pass) {
+		this.ops.push(hxd_fmt_scn_Operation.Material(pass.bits));
+		this.d.selectMaterial(pass);
+	}
+	,uploadShaderBuffers: function(buffers,which) {
+		switch(which) {
+		case 0:
+			this.ops.push(hxd_fmt_scn_Operation.UploadShaderBuffers(true,haxe_ds__$Vector_Vector_$Impl_$.toArray(buffers.vertex.globals),haxe_ds__$Vector_Vector_$Impl_$.toArray(buffers.fragment.globals)));
+			break;
+		case 1:
+			this.ops.push(hxd_fmt_scn_Operation.UploadShaderBuffers(false,haxe_ds__$Vector_Vector_$Impl_$.toArray(buffers.vertex.params),haxe_ds__$Vector_Vector_$Impl_$.toArray(buffers.fragment.params)));
+			break;
+		case 2:
+			var _g = [];
+			var _g1 = 0;
+			var _g2 = buffers.vertex.tex;
+			while(_g1 < _g2.length) {
+				var t = _g2[_g1];
+				++_g1;
+				_g.push(t.id);
+			}
+			var _g11 = [];
+			var _g21 = 0;
+			var _g3 = buffers.fragment.tex;
+			while(_g21 < _g3.length) {
+				var t1 = _g3[_g21];
+				++_g21;
+				_g11.push(t1.id);
+			}
+			this.ops.push(hxd_fmt_scn_Operation.UploadShaderTextures(_g,_g11));
+			break;
+		}
+		this.d.uploadShaderBuffers(buffers,which);
+	}
+	,getShaderInputNames: function() {
+		return this.d.getShaderInputNames();
+	}
+	,selectBuffer: function(buffer) {
+		this.ops.push(hxd_fmt_scn_Operation.SelectBuffer(this.vertexMap.h[buffer.buffer.vbuf.__id__],(buffer.flags & 16) != 0));
+		this.d.selectBuffer(buffer);
+	}
+	,selectMultiBuffers: function(buffers) {
+		var bufs = [];
+		var b = buffers;
+		while(b != null) {
+			bufs.push({ vbuf : this.vertexMap.h[buffers.buffer.buffer.vbuf.__id__], offset : b.offset});
+			b = b.next;
+		}
+		this.ops.push(hxd_fmt_scn_Operation.SelectMultiBuffer(bufs));
+		this.d.selectMultiBuffers(buffers);
+	}
+	,draw: function(ibuf,startIndex,ntriangles) {
+		this.ops.push(hxd_fmt_scn_Operation.Draw(this.indexMap.h[ibuf.__id__],startIndex,ntriangles));
+		this.d.draw(ibuf,startIndex,ntriangles);
+	}
+	,setRenderZone: function(x,y,width,height) {
+		this.ops.push(hxd_fmt_scn_Operation.RenderZone(x,y,width,height));
+		this.d.setRenderZone(x,y,width,height);
+	}
+	,setRenderTarget: function(tex) {
+		this.d.setRenderTarget(tex);
+		this.ops.push(hxd_fmt_scn_Operation.RenderTarget(tex == null?-1:tex.id));
+	}
+	,present: function() {
+		this.d.present();
+		this.ops.push(hxd_fmt_scn_Operation.Present);
+	}
+	,setDebug: function(b) {
+		this.d.setDebug(b);
+	}
+	,allocTexture: function(t) {
+		this.ops.push(hxd_fmt_scn_Operation.AllocTexture(t.id,t.name,t.width,t.height,t.flags));
+		return this.d.allocTexture(t);
+	}
+	,allocIndexes: function(count) {
+		var ibuf = this.d.allocIndexes(count);
+		var id = ++this.UID;
+		this.indexMap.set(ibuf,id);
+		this.ops.push(hxd_fmt_scn_Operation.AllocIndexes(id,count));
+		return ibuf;
+	}
+	,allocVertexes: function(m) {
+		var vbuf = this.d.allocVertexes(m);
+		var id = ++this.UID;
+		this.vertexMap.set(vbuf,id);
+		this.ops.push(hxd_fmt_scn_Operation.AllocVertexes(id,m.size,m.stride,m.flags));
+		this.vertexStride[id] = m.stride;
+		return vbuf;
+	}
+	,disposeTexture: function(t) {
+		this.d.disposeTexture(t);
+		this.ops.push(hxd_fmt_scn_Operation.DisposeTexture(t.id));
+	}
+	,indexID: function(i) {
+		return this.indexMap.h[i.__id__];
+	}
+	,vertexID: function(v) {
+		return this.vertexMap.h[v.__id__];
+	}
+	,disposeIndexes: function(i) {
+		this.d.disposeIndexes(i);
+		this.ops.push(hxd_fmt_scn_Operation.DisposeIndexes(this.indexMap.h[i.__id__]));
+		this.indexMap.remove(i);
+	}
+	,disposeVertexes: function(v) {
+		this.d.disposeVertexes(v);
+		this.ops.push(hxd_fmt_scn_Operation.DisposeVertexes(this.vertexMap.h[v.__id__]));
+		this.vertexMap.remove(v);
+	}
+	,uploadIndexBuffer: function(i,startIndice,indiceCount,buf,bufPos) {
+		this.d.uploadIndexBuffer(i,startIndice,indiceCount,buf,bufPos);
+		var bytes = new haxe_io_Bytes(new ArrayBuffer(indiceCount * 2));
+		var _g1 = 0;
+		while(_g1 < indiceCount) {
+			var i1 = _g1++;
+			bytes.setUInt16(i1 << 1,buf[bufPos + i1]);
+		}
+		this.ops.push(hxd_fmt_scn_Operation.UploadIndexes(this.indexMap.h[i.__id__],startIndice,indiceCount,bytes));
+	}
+	,uploadIndexBytes: function(i,startIndice,indiceCount,buf,bufPos) {
+		this.d.uploadIndexBytes(i,startIndice,indiceCount,buf,bufPos);
+		this.ops.push(hxd_fmt_scn_Operation.UploadIndexes(this.indexMap.h[i.__id__],startIndice,indiceCount,buf.sub(bufPos,indiceCount * 2)));
+	}
+	,uploadVertexBuffer: function(v,startVertex,vertexCount,buf,bufPos) {
+		this.d.uploadVertexBuffer(v,startVertex,vertexCount,buf,bufPos);
+		var stride = this.vertexStride[this.vertexMap.h[v.__id__]];
+		var bytes = new haxe_io_Bytes(new ArrayBuffer(stride * vertexCount * 4));
+		var _g1 = 0;
+		var _g = vertexCount * stride;
+		while(_g1 < _g) {
+			var i = _g1++;
+			bytes.setFloat(i << 2,buf[i + bufPos]);
+		}
+		this.ops.push(hxd_fmt_scn_Operation.UploadVertexes(this.vertexMap.h[v.__id__],startVertex,vertexCount,bytes));
+	}
+	,uploadVertexBytes: function(v,startVertex,vertexCount,buf,bufPos) {
+		this.d.uploadVertexBytes(v,startVertex,vertexCount,buf,bufPos);
+		this.ops.push(hxd_fmt_scn_Operation.UploadVertexes(this.vertexMap.h[v.__id__],startVertex,vertexCount,buf.sub(bufPos,this.vertexStride[this.vertexMap.h[v.__id__]] * vertexCount * 4)));
+	}
+	,uploadTextureBitmap: function(t,bmp,mipLevel,side) {
+		this.d.uploadTextureBitmap(t,bmp,mipLevel,side);
+		var pixels = bmp.getPixels();
+		if(pixels.bytes.length != bmp.ctx.canvas.width * bmp.ctx.canvas.height * 4) {
+			pixels.bytes = pixels.bytes.sub(0,bmp.ctx.canvas.width * bmp.ctx.canvas.height * 4);
+		}
+		this.ops.push(hxd_fmt_scn_Operation.UploadTexture(t.id,pixels,mipLevel,side));
+	}
+	,uploadTexturePixels: function(t,pixels,mipLevel,side) {
+		this.d.uploadTexturePixels(t,pixels,mipLevel,side);
+		var pixels1 = pixels.clone();
+		if(pixels1.bytes.length != pixels1.width * pixels1.height * 4) {
+			pixels1.bytes = pixels1.bytes.sub(0,pixels1.width * pixels1.height * 4);
+		}
+		this.ops.push(hxd_fmt_scn_Operation.UploadTexture(t.id,pixels1,mipLevel,side));
+	}
+	,defaultTexture: function() {
+		var tmp;
+		if(this.defTex != null) {
+			var _this = this.defTex;
+			if(_this.t == null) {
+				tmp = _this.realloc == null;
+			} else {
+				tmp = false;
+			}
+		} else {
+			tmp = true;
+		}
+		if(tmp) {
+			this.defTex = new h3d_mat_Texture(1,1,[h3d_mat_TextureFlags.NoAlloc],null,{ fileName : "ScnDriver.hx", lineNumber : 310, className : "h3d.impl.ScnDriver", methodName : "defaultTexture"});
+			this.defTex.t = this.d.allocTexture(this.defTex);
+			var pix = new hxd_Pixels(1,1,new haxe_io_Bytes(new ArrayBuffer(4)),hxd_PixelFormat.ARGB);
+			pix.setPixel(0,0,-256);
+			this.d.uploadTexturePixels(this.defTex,pix,0,0);
+		}
+		return this.defTex;
+	}
+	,getTexture: function(id) {
+		return this.textureMap.h[id];
+	}
+	,replay: function(op) {
+		switch(op[1]) {
+		case 0:
+			var str = op[2];
+			var _this = this.d;
+			if(_this.logEnable) {
+				_this.logImpl(str);
+			}
+			break;
+		case 1:
+			this.d.begin(++this.frame);
+			break;
+		case 2:
+			this.d.clear(op[2],op[3],op[4]);
+			break;
+		case 3:
+			this.d.resize(op[2],op[3]);
+			break;
+		case 4:
+			var data = op[3];
+			var id = op[2];
+			if(data != null) {
+				var s = haxe_Unserializer.run(data.toString());
+				s.id = hxsl_RuntimeShader.UID++;
+				this.savedShaders.h[id] = s;
+			}
+			this.d.selectShader(this.savedShaders.h[id]);
+			break;
+		case 5:
+			this.tmpPass.bits = op[2];
+			this.d.selectMaterial(this.tmpPass);
+			break;
+		case 6:
+			var fragment = op[4];
+			var vertex = op[3];
+			var globals = op[2];
+			var b = this.tmpBuf;
+			if(globals) {
+				this.tmpShader.vertex.globalsSize = vertex.length >> 2;
+				this.tmpShader.fragment.globalsSize = fragment.length >> 2;
+				var s1 = this.tmpShader;
+				b.vertex.grow(s1.vertex);
+				b.fragment.grow(s1.fragment);
+				var _g1 = 0;
+				var _g = vertex.length;
+				while(_g1 < _g) {
+					var i = _g1++;
+					b.vertex.globals[i] = vertex[i];
+				}
+				var _g11 = 0;
+				var _g2 = fragment.length;
+				while(_g11 < _g2) {
+					var i1 = _g11++;
+					b.fragment.globals[i1] = fragment[i1];
+				}
+			} else {
+				this.tmpShader.vertex.paramsSize = vertex.length >> 2;
+				this.tmpShader.fragment.paramsSize = fragment.length >> 2;
+				var s2 = this.tmpShader;
+				b.vertex.grow(s2.vertex);
+				b.fragment.grow(s2.fragment);
+				var _g12 = 0;
+				var _g3 = vertex.length;
+				while(_g12 < _g3) {
+					var i2 = _g12++;
+					b.vertex.params[i2] = vertex[i2];
+				}
+				var _g13 = 0;
+				var _g4 = fragment.length;
+				while(_g13 < _g4) {
+					var i3 = _g13++;
+					b.fragment.params[i3] = fragment[i3];
+				}
+			}
+			this.d.uploadShaderBuffers(b,globals?0:1);
+			break;
+		case 7:
+			var fragment1 = op[3];
+			var vertex1 = op[2];
+			var b1 = this.tmpBuf;
+			this.tmpShader.vertex.textures2DCount = vertex1.length;
+			this.tmpShader.fragment.textures2DCount = fragment1.length;
+			var s3 = this.tmpShader;
+			b1.vertex.grow(s3.vertex);
+			b1.fragment.grow(s3.fragment);
+			var _g14 = 0;
+			var _g5 = vertex1.length;
+			while(_g14 < _g5) {
+				var i4 = _g14++;
+				var t = this.textureMap.h[vertex1[i4]];
+				b1.vertex.tex[i4] = t == null?this.defaultTexture():t;
+			}
+			var _g15 = 0;
+			var _g6 = fragment1.length;
+			while(_g15 < _g6) {
+				var i5 = _g15++;
+				var t1 = this.textureMap.h[fragment1[i5]];
+				b1.fragment.tex[i5] = t1 == null?this.defaultTexture():t1;
+			}
+			this.d.uploadShaderBuffers(b1,2);
+			break;
+		case 8:
+			var fl = [h3d_mat_TextureFlags.NoAlloc];
+			var flbits = op[6];
+			var flcount = 0;
+			while(flbits != 0) {
+				if((flbits & 1) != 0) {
+					fl.push(Type.createEnumIndex(h3d_mat_TextureFlags,flcount,null));
+				}
+				flbits >>>= 1;
+				++flcount;
+			}
+			var t2 = new h3d_mat_Texture(op[4],op[5],fl,null,{ fileName : "ScnDriver.hx", lineNumber : 388, className : "h3d.impl.ScnDriver", methodName : "replay"});
+			t2.name = op[3];
+			t2.t = this.d.allocTexture(t2);
+			t2.flags &= 268434943;
+			this.textureMap.h[op[2]] = t2;
+			break;
+		case 9:
+			this.indexBuffers[op[2]] = this.d.allocIndexes(op[3]);
+			break;
+		case 10:
+			var m = new h3d_impl_ManagedBuffer(op[4],op[3],[h3d_BufferFlag.NoAlloc]);
+			m.flags = op[5];
+			m.vbuf = this.d.allocVertexes(m);
+			this.vertexBuffers[op[2]] = m;
+			break;
+		case 11:
+			var id1 = op[2];
+			var t3 = this.textureMap.h[id1];
+			if(t3 != null) {
+				this.textureMap.remove(id1);
+				this.d.disposeTexture(t3);
+			}
+			break;
+		case 12:
+			var id2 = op[2];
+			var i6 = this.indexBuffers[id2];
+			if(i6 != null) {
+				this.indexBuffers[id2] = null;
+				this.d.disposeIndexes(i6);
+			}
+			break;
+		case 13:
+			var id3 = op[2];
+			var v = this.vertexBuffers[id3];
+			if(v != null) {
+				this.vertexBuffers[id3] = null;
+				this.d.disposeVertexes(v.vbuf);
+			}
+			break;
+		case 14:
+			this.d.uploadTexturePixels(this.textureMap.h[op[2]],op[3],op[4],op[5]);
+			break;
+		case 15:
+			this.d.uploadIndexBytes(this.indexBuffers[op[2]],op[3],op[4],op[5],0);
+			break;
+		case 16:
+			this.d.uploadVertexBytes(this.vertexBuffers[op[2]].vbuf,op[3],op[4],op[5],0);
+			break;
+		case 17:
+			var m1 = this.vertexBuffers[op[2]];
+			var buf = new h3d_Buffer(0,0,[h3d_BufferFlag.NoAlloc],{ fileName : "ScnDriver.hx", lineNumber : 443, className : "h3d.impl.ScnDriver", methodName : "replay"});
+			buf.buffer = m1;
+			if(op[3]) {
+				buf.flags |= 16;
+			}
+			this.d.selectBuffer(buf);
+			break;
+		case 18:
+			var bufs = op[2];
+			var head = null;
+			var cur = null;
+			var _g7 = 0;
+			while(_g7 < bufs.length) {
+				var b2 = bufs[_g7];
+				++_g7;
+				var buf1 = new h3d_Buffer(0,0,[h3d_BufferFlag.NoAlloc],{ fileName : "ScnDriver.hx", lineNumber : 451, className : "h3d.impl.ScnDriver", methodName : "replay"});
+				buf1.buffer = this.vertexBuffers[b2.vbuf];
+				var b3 = new h3d_BufferOffset(buf1,b2.offset);
+				if(head == null) {
+					head = b3;
+				} else {
+					cur.next = b3;
+				}
+				cur = b3;
+			}
+			this.d.selectMultiBuffers(head);
+			break;
+		case 19:
+			this.d.draw(this.indexBuffers[op[2]],op[3],op[4]);
+			break;
+		case 20:
+			this.d.setRenderZone(op[2],op[3],op[4],op[5]);
+			break;
+		case 21:
+			this.d.setRenderTarget(this.textureMap.h[op[2]]);
+			break;
+		case 22:
+			this.d.present();
+			break;
+		}
+	}
+	,__class__: h3d_impl_ScnDriver
+});
 var h3d_impl_TextureCache = function() {
 	this.position = 0;
 	this.cache = [];
+	if(h3d_Engine.CURRENT == null) {
+		throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+	}
 	var engine = h3d_Engine.CURRENT;
 	this.hasDefaultDepth = engine.driver.hasFeature(h3d_impl_Feature.TargetUseDefaultDepthBuffer);
 	this.fullClearRequired = engine.driver.hasFeature(h3d_impl_Feature.FullClearRequired);
@@ -18832,7 +20091,7 @@ h3d_impl_TextureCache.prototype = {
 			if(hasDepth) {
 				flags.push(this.hasDefaultDepth?h3d_mat_TextureFlags.TargetUseDefaultDepth:h3d_mat_TextureFlags.TargetDepth);
 			}
-			t = new h3d_mat_Texture(width,height,flags,format);
+			t = new h3d_mat_Texture(width,height,flags,format,{ fileName : "TextureCache.hx", lineNumber : 48, className : "h3d.impl.TextureCache", methodName : "allocTarget"});
 			this.cache[this.position] = t;
 		}
 		t.setName(name);
@@ -18852,7 +20111,7 @@ h3d_impl_TextureCache.prototype = {
 	}
 	,__class__: h3d_impl_TextureCache
 };
-var h3d_mat_Face = $hxClasses["h3d.mat.Face"] = { __ename__ : true, __constructs__ : ["None","Back","Front","Both"] };
+var h3d_mat_Face = $hxClasses["h3d.mat.Face"] = { __ename__ : ["h3d","mat","Face"], __constructs__ : ["None","Back","Front","Both"] };
 h3d_mat_Face.None = ["None",0];
 h3d_mat_Face.None.toString = $estr;
 h3d_mat_Face.None.__enum__ = h3d_mat_Face;
@@ -18866,7 +20125,7 @@ h3d_mat_Face.Both = ["Both",3];
 h3d_mat_Face.Both.toString = $estr;
 h3d_mat_Face.Both.__enum__ = h3d_mat_Face;
 h3d_mat_Face.__empty_constructs__ = [h3d_mat_Face.None,h3d_mat_Face.Back,h3d_mat_Face.Front,h3d_mat_Face.Both];
-var h3d_mat_Blend = $hxClasses["h3d.mat.Blend"] = { __ename__ : true, __constructs__ : ["One","Zero","SrcAlpha","SrcColor","DstAlpha","DstColor","OneMinusSrcAlpha","OneMinusSrcColor","OneMinusDstAlpha","OneMinusDstColor","ConstantColor","ConstantAlpha","OneMinusConstantColor","OneMinusConstantAlpha","SrcAlphaSaturate"] };
+var h3d_mat_Blend = $hxClasses["h3d.mat.Blend"] = { __ename__ : ["h3d","mat","Blend"], __constructs__ : ["One","Zero","SrcAlpha","SrcColor","DstAlpha","DstColor","OneMinusSrcAlpha","OneMinusSrcColor","OneMinusDstAlpha","OneMinusDstColor","ConstantColor","ConstantAlpha","OneMinusConstantColor","OneMinusConstantAlpha","SrcAlphaSaturate"] };
 h3d_mat_Blend.One = ["One",0];
 h3d_mat_Blend.One.toString = $estr;
 h3d_mat_Blend.One.__enum__ = h3d_mat_Blend;
@@ -18913,7 +20172,7 @@ h3d_mat_Blend.SrcAlphaSaturate = ["SrcAlphaSaturate",14];
 h3d_mat_Blend.SrcAlphaSaturate.toString = $estr;
 h3d_mat_Blend.SrcAlphaSaturate.__enum__ = h3d_mat_Blend;
 h3d_mat_Blend.__empty_constructs__ = [h3d_mat_Blend.One,h3d_mat_Blend.Zero,h3d_mat_Blend.SrcAlpha,h3d_mat_Blend.SrcColor,h3d_mat_Blend.DstAlpha,h3d_mat_Blend.DstColor,h3d_mat_Blend.OneMinusSrcAlpha,h3d_mat_Blend.OneMinusSrcColor,h3d_mat_Blend.OneMinusDstAlpha,h3d_mat_Blend.OneMinusDstColor,h3d_mat_Blend.ConstantColor,h3d_mat_Blend.ConstantAlpha,h3d_mat_Blend.OneMinusConstantColor,h3d_mat_Blend.OneMinusConstantAlpha,h3d_mat_Blend.SrcAlphaSaturate];
-var h3d_mat_Compare = $hxClasses["h3d.mat.Compare"] = { __ename__ : true, __constructs__ : ["Always","Never","Equal","NotEqual","Greater","GreaterEqual","Less","LessEqual"] };
+var h3d_mat_Compare = $hxClasses["h3d.mat.Compare"] = { __ename__ : ["h3d","mat","Compare"], __constructs__ : ["Always","Never","Equal","NotEqual","Greater","GreaterEqual","Less","LessEqual"] };
 h3d_mat_Compare.Always = ["Always",0];
 h3d_mat_Compare.Always.toString = $estr;
 h3d_mat_Compare.Always.__enum__ = h3d_mat_Compare;
@@ -18939,7 +20198,7 @@ h3d_mat_Compare.LessEqual = ["LessEqual",7];
 h3d_mat_Compare.LessEqual.toString = $estr;
 h3d_mat_Compare.LessEqual.__enum__ = h3d_mat_Compare;
 h3d_mat_Compare.__empty_constructs__ = [h3d_mat_Compare.Always,h3d_mat_Compare.Never,h3d_mat_Compare.Equal,h3d_mat_Compare.NotEqual,h3d_mat_Compare.Greater,h3d_mat_Compare.GreaterEqual,h3d_mat_Compare.Less,h3d_mat_Compare.LessEqual];
-var h3d_mat_MipMap = $hxClasses["h3d.mat.MipMap"] = { __ename__ : true, __constructs__ : ["None","Nearest","Linear"] };
+var h3d_mat_MipMap = $hxClasses["h3d.mat.MipMap"] = { __ename__ : ["h3d","mat","MipMap"], __constructs__ : ["None","Nearest","Linear"] };
 h3d_mat_MipMap.None = ["None",0];
 h3d_mat_MipMap.None.toString = $estr;
 h3d_mat_MipMap.None.__enum__ = h3d_mat_MipMap;
@@ -18950,7 +20209,7 @@ h3d_mat_MipMap.Linear = ["Linear",2];
 h3d_mat_MipMap.Linear.toString = $estr;
 h3d_mat_MipMap.Linear.__enum__ = h3d_mat_MipMap;
 h3d_mat_MipMap.__empty_constructs__ = [h3d_mat_MipMap.None,h3d_mat_MipMap.Nearest,h3d_mat_MipMap.Linear];
-var h3d_mat_Filter = $hxClasses["h3d.mat.Filter"] = { __ename__ : true, __constructs__ : ["Nearest","Linear"] };
+var h3d_mat_Filter = $hxClasses["h3d.mat.Filter"] = { __ename__ : ["h3d","mat","Filter"], __constructs__ : ["Nearest","Linear"] };
 h3d_mat_Filter.Nearest = ["Nearest",0];
 h3d_mat_Filter.Nearest.toString = $estr;
 h3d_mat_Filter.Nearest.__enum__ = h3d_mat_Filter;
@@ -18958,7 +20217,7 @@ h3d_mat_Filter.Linear = ["Linear",1];
 h3d_mat_Filter.Linear.toString = $estr;
 h3d_mat_Filter.Linear.__enum__ = h3d_mat_Filter;
 h3d_mat_Filter.__empty_constructs__ = [h3d_mat_Filter.Nearest,h3d_mat_Filter.Linear];
-var h3d_mat_Wrap = $hxClasses["h3d.mat.Wrap"] = { __ename__ : true, __constructs__ : ["Clamp","Repeat"] };
+var h3d_mat_Wrap = $hxClasses["h3d.mat.Wrap"] = { __ename__ : ["h3d","mat","Wrap"], __constructs__ : ["Clamp","Repeat"] };
 h3d_mat_Wrap.Clamp = ["Clamp",0];
 h3d_mat_Wrap.Clamp.toString = $estr;
 h3d_mat_Wrap.Clamp.__enum__ = h3d_mat_Wrap;
@@ -18966,7 +20225,7 @@ h3d_mat_Wrap.Repeat = ["Repeat",1];
 h3d_mat_Wrap.Repeat.toString = $estr;
 h3d_mat_Wrap.Repeat.__enum__ = h3d_mat_Wrap;
 h3d_mat_Wrap.__empty_constructs__ = [h3d_mat_Wrap.Clamp,h3d_mat_Wrap.Repeat];
-var h3d_mat_Operation = $hxClasses["h3d.mat.Operation"] = { __ename__ : true, __constructs__ : ["Add","Sub","ReverseSub"] };
+var h3d_mat_Operation = $hxClasses["h3d.mat.Operation"] = { __ename__ : ["h3d","mat","Operation"], __constructs__ : ["Add","Sub","ReverseSub"] };
 h3d_mat_Operation.Add = ["Add",0];
 h3d_mat_Operation.Add.toString = $estr;
 h3d_mat_Operation.Add.__enum__ = h3d_mat_Operation;
@@ -18977,7 +20236,7 @@ h3d_mat_Operation.ReverseSub = ["ReverseSub",2];
 h3d_mat_Operation.ReverseSub.toString = $estr;
 h3d_mat_Operation.ReverseSub.__enum__ = h3d_mat_Operation;
 h3d_mat_Operation.__empty_constructs__ = [h3d_mat_Operation.Add,h3d_mat_Operation.Sub,h3d_mat_Operation.ReverseSub];
-var h3d_mat_TextureFlags = $hxClasses["h3d.mat.TextureFlags"] = { __ename__ : true, __constructs__ : ["Target","TargetDepth","TargetUseDefaultDepth","Cubic","MipMapped","IsNPOT","NoAlloc","Dynamic","AlphaPremultiplied","WasCleared","Loading"] };
+var h3d_mat_TextureFlags = $hxClasses["h3d.mat.TextureFlags"] = { __ename__ : ["h3d","mat","TextureFlags"], __constructs__ : ["Target","TargetDepth","TargetUseDefaultDepth","Cubic","MipMapped","IsNPOT","NoAlloc","Dynamic","AlphaPremultiplied","WasCleared","Loading"] };
 h3d_mat_TextureFlags.Target = ["Target",0];
 h3d_mat_TextureFlags.Target.toString = $estr;
 h3d_mat_TextureFlags.Target.__enum__ = h3d_mat_TextureFlags;
@@ -19012,7 +20271,7 @@ h3d_mat_TextureFlags.Loading = ["Loading",10];
 h3d_mat_TextureFlags.Loading.toString = $estr;
 h3d_mat_TextureFlags.Loading.__enum__ = h3d_mat_TextureFlags;
 h3d_mat_TextureFlags.__empty_constructs__ = [h3d_mat_TextureFlags.Target,h3d_mat_TextureFlags.TargetDepth,h3d_mat_TextureFlags.TargetUseDefaultDepth,h3d_mat_TextureFlags.Cubic,h3d_mat_TextureFlags.MipMapped,h3d_mat_TextureFlags.IsNPOT,h3d_mat_TextureFlags.NoAlloc,h3d_mat_TextureFlags.Dynamic,h3d_mat_TextureFlags.AlphaPremultiplied,h3d_mat_TextureFlags.WasCleared,h3d_mat_TextureFlags.Loading];
-var h3d_mat_MaterialKind = $hxClasses["h3d.mat.MaterialKind"] = { __ename__ : true, __constructs__ : ["Opaque","Alpha","AlphaKill","Add","SoftAdd"] };
+var h3d_mat_MaterialKind = $hxClasses["h3d.mat.MaterialKind"] = { __ename__ : ["h3d","mat","MaterialKind"], __constructs__ : ["Opaque","Alpha","AlphaKill","Add","SoftAdd"] };
 h3d_mat_MaterialKind.Opaque = ["Opaque",0];
 h3d_mat_MaterialKind.Opaque.toString = $estr;
 h3d_mat_MaterialKind.Opaque.__enum__ = h3d_mat_MaterialKind;
@@ -19029,7 +20288,7 @@ h3d_mat_MaterialKind.SoftAdd = ["SoftAdd",4];
 h3d_mat_MaterialKind.SoftAdd.toString = $estr;
 h3d_mat_MaterialKind.SoftAdd.__enum__ = h3d_mat_MaterialKind;
 h3d_mat_MaterialKind.__empty_constructs__ = [h3d_mat_MaterialKind.Opaque,h3d_mat_MaterialKind.Alpha,h3d_mat_MaterialKind.AlphaKill,h3d_mat_MaterialKind.Add,h3d_mat_MaterialKind.SoftAdd];
-var h3d_mat_ShadowsMode = $hxClasses["h3d.mat.ShadowsMode"] = { __ename__ : true, __constructs__ : ["None","Active","CastOnly","ReceiveOnly"] };
+var h3d_mat_ShadowsMode = $hxClasses["h3d.mat.ShadowsMode"] = { __ename__ : ["h3d","mat","ShadowsMode"], __constructs__ : ["None","Active","CastOnly","ReceiveOnly"] };
 h3d_mat_ShadowsMode.None = ["None",0];
 h3d_mat_ShadowsMode.None.toString = $estr;
 h3d_mat_ShadowsMode.None.__enum__ = h3d_mat_ShadowsMode;
@@ -19235,6 +20494,9 @@ h3d_mat_Material.prototype = {
 	,clone: function(m) {
 		if(m == null) {
 			m = new h3d_mat_Material();
+		}
+		if((m == null?null:js_Boot.getClass(m)) != js_Boot.getClass(this)) {
+			throw new js__$Boot_HaxeError(Std.string(this) + " is missing clone()");
 		}
 		m.passes.loadProps(this.passes);
 		m.set_castShadows(this.castShadows);
@@ -19678,7 +20940,7 @@ h3d_mat_Pass.prototype = {
 	}
 	,__class__: h3d_mat_Pass
 };
-var hxd_PixelFormat = $hxClasses["hxd.PixelFormat"] = { __ename__ : true, __constructs__ : ["ARGB","BGRA","RGBA","RGBA16F","RGBA32F","ALPHA"] };
+var hxd_PixelFormat = $hxClasses["hxd.PixelFormat"] = { __ename__ : ["hxd","PixelFormat"], __constructs__ : ["ARGB","BGRA","RGBA","RGBA16F","RGBA32F","ALPHA"] };
 hxd_PixelFormat.ARGB = ["ARGB",0];
 hxd_PixelFormat.ARGB.toString = $estr;
 hxd_PixelFormat.ARGB.__enum__ = hxd_PixelFormat;
@@ -19699,6 +20961,9 @@ hxd_PixelFormat.ALPHA.toString = $estr;
 hxd_PixelFormat.ALPHA.__enum__ = hxd_PixelFormat;
 hxd_PixelFormat.__empty_constructs__ = [hxd_PixelFormat.ARGB,hxd_PixelFormat.BGRA,hxd_PixelFormat.RGBA,hxd_PixelFormat.RGBA16F,hxd_PixelFormat.RGBA32F,hxd_PixelFormat.ALPHA];
 var h3d_mat_Texture = function(w,h,flags,format,allocPos) {
+	if(h3d_Engine.CURRENT == null) {
+		throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+	}
 	this.mem = h3d_Engine.CURRENT.mem;
 	if(format == null) {
 		format = h3d_mat_Texture.nativeFormat;
@@ -19731,6 +20996,7 @@ var h3d_mat_Texture = function(w,h,flags,format,allocPos) {
 	this.set_filter(h3d_mat_Filter.Linear);
 	this.set_wrap(h3d_mat_Wrap.Clamp);
 	this.bits &= 32767;
+	this.allocPos = allocPos;
 	if((this.flags & 64) == 0) {
 		this.alloc();
 	}
@@ -19775,7 +21041,7 @@ h3d_mat_Texture.genNoise = function(size) {
 	if(t != null && !(t.t == null && t.realloc == null)) {
 		return t;
 	}
-	var t1 = new h3d_mat_Texture(size,size,[h3d_mat_TextureFlags.NoAlloc]);
+	var t1 = new h3d_mat_Texture(size,size,[h3d_mat_TextureFlags.NoAlloc],null,{ fileName : "Texture.hx", lineNumber : 330, className : "h3d.mat.Texture", methodName : "genNoise"});
 	var t2 = t1;
 	var a1 = size;
 	t1.realloc = function() {
@@ -19817,6 +21083,9 @@ h3d_mat_Texture.prototype = {
 		var str = this.name;
 		if(this.name == null) {
 			str = "Texture_" + this.id;
+			if(this.allocPos != null) {
+				str += "(" + this.allocPos.className + ":" + this.allocPos.lineNumber + ")";
+			}
 		}
 		return str + "(" + this.width + "x" + this.height + ")";
 	}
@@ -19918,11 +21187,15 @@ h3d_mat_Texture.prototype = {
 	,dispose: function() {
 		if(this.t != null) {
 			this.mem.deleteTexture(this);
+			this.allocPos.customParams = ["#DISPOSED"];
 		}
 	}
 	,capturePixels: function(withAlpha) {
 		if(withAlpha == null) {
 			withAlpha = false;
+		}
+		if(h3d_Engine.CURRENT == null) {
+			throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
 		}
 		var e = h3d_Engine.CURRENT;
 		e.pushTarget(this);
@@ -19976,6 +21249,9 @@ var h3d_pass_ScreenFx = function(shader) {
 	this.pass.set_culling(h3d_mat_Face.None);
 	this.pass.depth(false,h3d_mat_Compare.Always);
 	this.plan = h3d_prim_Plan2D.get();
+	if(h3d_Engine.CURRENT == null) {
+		throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+	}
 	this.engine = h3d_Engine.CURRENT;
 	this.fullClearRequired = this.engine.hasFeature(h3d_impl_Feature.FullClearRequired);
 };
@@ -20098,7 +21374,7 @@ h3d_pass_Blur.prototype = $extend(h3d_pass_ScreenFx.prototype,{
 		}
 		var alloc = tmp == null;
 		if(alloc) {
-			tmp = new h3d_mat_Texture(src.width,src.height,[h3d_mat_TextureFlags.Target]);
+			tmp = new h3d_mat_Texture(src.width,src.height,[h3d_mat_TextureFlags.Target],null,{ fileName : "Blur.hx", lineNumber : 93, className : "h3d.pass.Blur", methodName : "apply"});
 		}
 		if(this.values == null) {
 			this.calcValues();
@@ -20388,6 +21664,10 @@ h3d_pass_Default.prototype = $extend(h3d_pass_Base.prototype,{
 		this.ctx.engine.uploadShaderBuffers(this.cachedBuffer,2);
 	}
 	,log: function(str) {
+		var _this = this.ctx.engine.driver;
+		if(_this.logEnable) {
+			_this.logImpl(str);
+		}
 	}
 	,drawObject: function(p) {
 		this.ctx.drawPass = p;
@@ -20495,7 +21775,23 @@ h3d_pass_Default.prototype = $extend(h3d_pass_Base.prototype,{
 		var p2 = passes;
 		var buf = this.cachedBuffer;
 		var prevShader = null;
+		var drawTri = 0;
+		var drawCalls = 0;
+		var shaderSwitches = 0;
+		if(this.ctx.engine.driver.logEnable) {
+			var _this = this.ctx.engine.driver;
+			if(_this.logEnable) {
+				_this.logImpl("Pass " + (passes == null?"???":passes.pass.name) + " start");
+			}
+			drawTri = this.ctx.engine.drawTriangles;
+			drawCalls = this.ctx.engine.drawCalls;
+			shaderSwitches = this.ctx.engine.shaderSwitches;
+		}
 		while(p2 != null) {
+			var _this1 = this.ctx.engine.driver;
+			if(_this1.logEnable) {
+				_this1.logImpl("Render " + Std.string(p2.obj) + "." + p2.pass.name);
+			}
 			this.manager.globals.map.h[this.globalModelView_id] = p2.obj.absPos;
 			if(p2.shader.globals.h.hasOwnProperty(this.globalModelViewInverse_id)) {
 				var v = p2.obj.getInvPos();
@@ -20522,9 +21818,20 @@ h3d_pass_Default.prototype = $extend(h3d_pass_Base.prototype,{
 			this.drawObject(p2);
 			p2 = p2.next;
 		}
-		var _this = this.ctx;
-		_this.cachedPos = 0;
-		_this.drawPass = null;
+		if(this.ctx.engine.driver.logEnable) {
+			var _this2 = this.ctx.engine.driver;
+			if(_this2.logEnable) {
+				_this2.logImpl("Pass " + (passes == null?"???":passes.pass.name) + " end");
+			}
+			var str = "\t" + (this.ctx.engine.drawTriangles - drawTri) + " tri " + (this.ctx.engine.drawCalls - drawCalls) + " calls " + (this.ctx.engine.shaderSwitches - shaderSwitches) + " shaders";
+			var _this3 = this.ctx.engine.driver;
+			if(_this3.logEnable) {
+				_this3.logImpl(str);
+			}
+		}
+		var _this4 = this.ctx;
+		_this4.cachedPos = 0;
+		_this4.drawPass = null;
 		return passes;
 	}
 	,get_cameraView: function() {
@@ -20677,7 +21984,7 @@ var h3d_pass_HardwarePick = function() {
 	_this.set_blendAlphaSrc(src);
 	_this.set_blendDst(dst);
 	_this.set_blendAlphaDst(dst);
-	this.texOut = new h3d_mat_Texture(3,3,[h3d_mat_TextureFlags.Target,h3d_mat_TextureFlags.TargetUseDefaultDepth]);
+	this.texOut = new h3d_mat_Texture(3,3,[h3d_mat_TextureFlags.Target,h3d_mat_TextureFlags.TargetUseDefaultDepth],null,{ fileName : "HardwarePick.hx", lineNumber : 18, className : "h3d.pass.HardwarePick", methodName : "new"});
 };
 $hxClasses["h3d.pass.HardwarePick"] = h3d_pass_HardwarePick;
 h3d_pass_HardwarePick.__name__ = ["h3d","pass","HardwarePick"];
@@ -21146,6 +22453,7 @@ var h3d_prim_BigPrimitive = function(stride,isRaw,pos) {
 	if(stride < 3) {
 		throw new js__$Boot_HaxeError("Minimum stride = 3");
 	}
+	this.allocPos = pos;
 };
 $hxClasses["h3d.prim.BigPrimitive"] = h3d_prim_BigPrimitive;
 h3d_prim_BigPrimitive.__name__ = ["h3d","prim","BigPrimitive"];
@@ -21264,7 +22572,7 @@ h3d_prim_BigPrimitive.prototype = $extend(h3d_prim_Primitive.prototype,{
 	,flush: function() {
 		if(this.tmpBuf != null) {
 			if(this.bufPos > 0 && this.idxPos > 0) {
-				var b = h3d_Buffer.ofSubFloats(this.tmpBuf,this.stride,this.bufPos / this.stride | 0);
+				var b = h3d_Buffer.ofSubFloats(this.tmpBuf,this.stride,this.bufPos / this.stride | 0,null,this.allocPos);
 				if(this.isRaw) {
 					b.flags |= 16;
 				}
@@ -21628,7 +22936,7 @@ h3d_prim_HMDModel.prototype = $extend(h3d_prim_MeshPrimitive.prototype,{
 	}
 	,alloc: function(engine) {
 		this.dispose();
-		this.buffer = new h3d_Buffer(this.data.vertexCount,this.data.vertexStride);
+		this.buffer = new h3d_Buffer(this.data.vertexCount,this.data.vertexStride,null,{ fileName : "HMDModel.hx", lineNumber : 47, className : "h3d.prim.HMDModel", methodName : "alloc"});
 		var entry = this.lib.entry;
 		entry.open();
 		entry.skip(this.dataPosition + this.data.vertexPosition);
@@ -21730,7 +23038,7 @@ h3d_prim_HMDModel.prototype = $extend(h3d_prim_MeshPrimitive.prototype,{
 			v.push(n.y);
 			v.push(n.z);
 		}
-		this.addBuffer(name,h3d_Buffer.ofFloats(v,3),0);
+		this.addBuffer(name,h3d_Buffer.ofFloats(v,3,null,{ fileName : "HMDModel.hx", lineNumber : 132, className : "h3d.prim.HMDModel", methodName : "recomputeNormals"}),0);
 		this.normalsRecomputed = name;
 	}
 	,render: function(engine) {
@@ -21796,7 +23104,7 @@ h3d_prim_Plan2D.prototype = $extend(h3d_prim_Primitive.prototype,{
 		v.push(1);
 		v.push(1);
 		v.push(0);
-		this.buffer = h3d_Buffer.ofFloats(v,4,[h3d_BufferFlag.Quads,h3d_BufferFlag.RawFormat]);
+		this.buffer = h3d_Buffer.ofFloats(v,4,[h3d_BufferFlag.Quads,h3d_BufferFlag.RawFormat],{ fileName : "Plan2D.hx", lineNumber : 38, className : "h3d.prim.Plan2D", methodName : "alloc"});
 	}
 	,render: function(engine) {
 		if(this.buffer == null || this.buffer.isDisposed()) {
@@ -21892,7 +23200,7 @@ h3d_prim_Polygon.prototype = $extend(h3d_prim_Primitive.prototype,{
 		if(this.normals == null) {
 			flags.push(h3d_BufferFlag.RawFormat);
 		}
-		this.buffer = h3d_Buffer.ofFloats(buf,size,flags);
+		this.buffer = h3d_Buffer.ofFloats(buf,size,flags,{ fileName : "Polygon.hx", lineNumber : 66, className : "h3d.prim.Polygon", methodName : "alloc"});
 		if(this.idx != null) {
 			this.indexes = h3d_Indexes.alloc(this.idx);
 		}
@@ -22102,7 +23410,7 @@ h3d_prim_RawPrimitive.prototype = $extend(h3d_prim_Primitive.prototype,{
 		if(inf.stride < 8) {
 			flags.push(h3d_BufferFlag.RawFormat);
 		}
-		this.buffer = h3d_Buffer.ofFloats(inf.vbuf,inf.stride,flags);
+		this.buffer = h3d_Buffer.ofFloats(inf.vbuf,inf.stride,flags,{ fileName : "RawPrimitive.hx", lineNumber : 23, className : "h3d.prim.RawPrimitive", methodName : "alloc"});
 		this.vcount = this.buffer.vertices;
 		this.tcount = inf.ibuf != null?inf.ibuf.length / 3 | 0:inf.quads?this.vcount >> 1:this.vcount / 3 | 0;
 		if(inf.ibuf != null) {
@@ -22461,6 +23769,9 @@ h3d_scene_Object.prototype = {
 	,clone: function(o) {
 		if(o == null) {
 			o = new h3d_scene_Object();
+		}
+		if((o == null?null:js_Boot.getClass(o)) != js_Boot.getClass(this)) {
+			throw new js__$Boot_HaxeError(Std.string(this) + " is missing clone()");
 		}
 		o.x = this.x;
 		o.flags |= 1;
@@ -23193,7 +24504,7 @@ var h3d_scene_Graphics = function(parent) {
 	this.curZ = 0.;
 	this.curY = 0.;
 	this.curX = 0.;
-	this.bprim = new h3d_prim_BigPrimitive(12);
+	this.bprim = new h3d_prim_BigPrimitive(12,null,{ fileName : "Graphics.hx", lineNumber : 43, className : "h3d.scene.Graphics", methodName : "new"});
 	h3d_scene_Mesh.call(this,this.bprim,null,parent);
 	this.tmpPoints = [];
 	this.lineShader = new h3d_shader_LineShader();
@@ -24584,6 +25895,9 @@ h3d_scene_Scene.prototype = $extend(h3d_scene_Object.prototype,{
 		this.ctx.elapsedTime = elapsedTime;
 	}
 	,hardwarePick: function(pixelX,pixelY) {
+		if(h3d_Engine.CURRENT == null) {
+			throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+		}
 		var engine = h3d_Engine.CURRENT;
 		this.camera.screenRatio = engine.width / engine.height;
 		this.camera.update();
@@ -24600,7 +25914,7 @@ h3d_scene_Scene.prototype = $extend(h3d_scene_Object.prototype,{
 				p = new h3d_pass_HardwarePick();
 				this.hardwarePass = p;
 			}
-			var value = h3d_mat_Texture.fromColor(267386880,0);
+			var value = h3d_mat_Texture.fromColor(267386880,0,{ fileName : "Scene.hx", lineNumber : 216, className : "h3d.scene.Scene", methodName : "hardwarePick"});
 			this.ctx.setGlobalID(hxsl_Globals.allocID("depthMap"),value);
 			p.pickX = pixelX;
 			p.pickY = pixelY;
@@ -24720,13 +26034,26 @@ h3d_scene_Scene.prototype = $extend(h3d_scene_Object.prototype,{
 		this.ctx.lightSystem = this.lightSystem;
 		this.lightSystem.initLights(this.ctx);
 		this.renderer.process(passes);
-		this.ctx.done();
 		var _g3 = 0;
-		var _g12 = this.postPasses;
-		while(_g3 < _g12.length) {
-			var p3 = _g12[_g3];
+		while(_g3 < passes.length) {
+			var p3 = passes[_g3];
 			++_g3;
-			p3.render(engine);
+			if(!p3.rendered) {
+				haxe_Log.trace("Pass " + p3.name + " has not been rendered : don't know how to handle.",{ fileName : "Scene.hx", lineNumber : 281, className : "h3d.scene.Scene", methodName : "render"});
+				var o = p3.passes;
+				while(o != null) {
+					haxe_Log.trace(" used by " + o.obj.name == null?"" + Std.string(o.obj):o.obj.name,{ fileName : "Scene.hx", lineNumber : 284, className : "h3d.scene.Scene", methodName : "render"});
+					o = o.next;
+				}
+			}
+		}
+		this.ctx.done();
+		var _g4 = 0;
+		var _g12 = this.postPasses;
+		while(_g4 < _g12.length) {
+			var p4 = _g12[_g4];
+			++_g4;
+			p4.render(engine);
 		}
 		this.ctx.camera = null;
 		this.ctx.engine = null;
@@ -26230,7 +27557,7 @@ h3d_shader_Manager.prototype = {
 			}
 			var t = tmp1;
 			if(t == null) {
-				t = h3d_mat_Texture.fromColor(16711935);
+				t = h3d_mat_Texture.fromColor(16711935,null,{ fileName : "Manager.hx", lineNumber : 183, className : "h3d.shader.Manager", methodName : "fillParams"});
 			}
 			buf1.tex[tid++] = t;
 			p1 = p1.next;
@@ -26256,7 +27583,7 @@ h3d_shader_Manager.prototype = {
 			}
 			var t1 = tmp2;
 			if(t1 == null) {
-				t1 = h3d_mat_Texture.fromColor(16711935);
+				t1 = h3d_mat_Texture.fromColor(16711935,null,{ fileName : "Manager.hx", lineNumber : 190, className : "h3d.shader.Manager", methodName : "fillParams"});
 			}
 			buf1.tex[tid++] = t1;
 			p2 = p2.next;
@@ -26307,7 +27634,7 @@ h3d_shader_Manager.prototype = {
 			}
 			var t2 = tmp4;
 			if(t2 == null) {
-				t2 = h3d_mat_Texture.fromColor(16711935);
+				t2 = h3d_mat_Texture.fromColor(16711935,null,{ fileName : "Manager.hx", lineNumber : 183, className : "h3d.shader.Manager", methodName : "fillParams"});
 			}
 			buf2.tex[tid1++] = t2;
 			p4 = p4.next;
@@ -26333,7 +27660,7 @@ h3d_shader_Manager.prototype = {
 			}
 			var t3 = tmp5;
 			if(t3 == null) {
-				t3 = h3d_mat_Texture.fromColor(16711935);
+				t3 = h3d_mat_Texture.fromColor(16711935,null,{ fileName : "Manager.hx", lineNumber : 190, className : "h3d.shader.Manager", methodName : "fillParams"});
 			}
 			buf2.tex[tid1++] = t3;
 			p5 = p5.next;
@@ -26724,6 +28051,305 @@ haxe_Resource.getBytes = function(name) {
 		}
 	}
 	return null;
+};
+var haxe_Serializer = function() {
+	this.buf = new StringBuf();
+	this.cache = [];
+	this.useCache = haxe_Serializer.USE_CACHE;
+	this.useEnumIndex = haxe_Serializer.USE_ENUM_INDEX;
+	this.shash = new haxe_ds_StringMap();
+	this.scount = 0;
+};
+$hxClasses["haxe.Serializer"] = haxe_Serializer;
+haxe_Serializer.__name__ = ["haxe","Serializer"];
+haxe_Serializer.prototype = {
+	toString: function() {
+		return this.buf.b;
+	}
+	,serializeString: function(s) {
+		var _this = this.shash;
+		var x = __map_reserved[s] != null?_this.getReserved(s):_this.h[s];
+		if(x != null) {
+			this.buf.b += "R";
+			this.buf.b += x == null?"null":"" + x;
+			return;
+		}
+		var _this1 = this.shash;
+		var value = this.scount++;
+		if(__map_reserved[s] != null) {
+			_this1.setReserved(s,value);
+		} else {
+			_this1.h[s] = value;
+		}
+		this.buf.b += "y";
+		s = encodeURIComponent(s);
+		this.buf.b += Std.string(s.length);
+		this.buf.b += ":";
+		this.buf.b += s == null?"null":"" + s;
+	}
+	,serializeRef: function(v) {
+		var vt = typeof(v);
+		var _g1 = 0;
+		var _g = this.cache.length;
+		while(_g1 < _g) {
+			var i = _g1++;
+			var ci = this.cache[i];
+			if(typeof(ci) == vt && ci == v) {
+				this.buf.b += "r";
+				this.buf.b += i == null?"null":"" + i;
+				return true;
+			}
+		}
+		this.cache.push(v);
+		return false;
+	}
+	,serializeFields: function(v) {
+		var _g = 0;
+		var _g1 = Reflect.fields(v);
+		while(_g < _g1.length) {
+			var f = _g1[_g];
+			++_g;
+			this.serializeString(f);
+			this.serialize(Reflect.field(v,f));
+		}
+		this.buf.b += "g";
+	}
+	,serialize: function(v) {
+		var _g = Type["typeof"](v);
+		switch(_g[1]) {
+		case 0:
+			this.buf.b += "n";
+			break;
+		case 1:
+			var v1 = v;
+			if(v1 == 0) {
+				this.buf.b += "z";
+				return;
+			}
+			this.buf.b += "i";
+			this.buf.b += v1 == null?"null":"" + v1;
+			break;
+		case 2:
+			var v2 = v;
+			if(isNaN(v2)) {
+				this.buf.b += "k";
+			} else if(!isFinite(v2)) {
+				this.buf.b += v2 < 0?"m":"p";
+			} else {
+				this.buf.b += "d";
+				this.buf.b += v2 == null?"null":"" + v2;
+			}
+			break;
+		case 3:
+			this.buf.b += v?"t":"f";
+			break;
+		case 4:
+			if(js_Boot.__instanceof(v,Class)) {
+				var className = Type.getClassName(v);
+				this.buf.b += "A";
+				this.serializeString(className);
+			} else if(js_Boot.__instanceof(v,Enum)) {
+				this.buf.b += "B";
+				this.serializeString(Type.getEnumName(v));
+			} else {
+				if(this.useCache && this.serializeRef(v)) {
+					return;
+				}
+				this.buf.b += "o";
+				this.serializeFields(v);
+			}
+			break;
+		case 5:
+			throw new js__$Boot_HaxeError("Cannot serialize function");
+			break;
+		case 6:
+			var c = _g[2];
+			if(c == String) {
+				this.serializeString(v);
+				return;
+			}
+			if(this.useCache && this.serializeRef(v)) {
+				return;
+			}
+			switch(c) {
+			case Array:
+				var ucount = 0;
+				this.buf.b += "a";
+				var l = v.length;
+				var _g1 = 0;
+				var _g2 = l;
+				while(_g1 < _g2) {
+					var i = _g1++;
+					if(v[i] == null) {
+						++ucount;
+					} else {
+						if(ucount > 0) {
+							if(ucount == 1) {
+								this.buf.b += "n";
+							} else {
+								this.buf.b += "u";
+								this.buf.b += ucount == null?"null":"" + ucount;
+							}
+							ucount = 0;
+						}
+						this.serialize(v[i]);
+					}
+				}
+				if(ucount > 0) {
+					if(ucount == 1) {
+						this.buf.b += "n";
+					} else {
+						this.buf.b += "u";
+						this.buf.b += ucount == null?"null":"" + ucount;
+					}
+				}
+				this.buf.b += "h";
+				break;
+			case Date:
+				var d = v;
+				this.buf.b += "v";
+				this.buf.b += Std.string(d.getTime());
+				break;
+			case List:
+				this.buf.b += "l";
+				var v3 = v;
+				var _g_head = v3.h;
+				while(_g_head != null) {
+					var val = _g_head.item;
+					_g_head = _g_head.next;
+					this.serialize(val);
+				}
+				this.buf.b += "h";
+				break;
+			case haxe_ds_IntMap:
+				this.buf.b += "q";
+				var v4 = v;
+				var tmp = v4.keys();
+				while(tmp.hasNext()) {
+					var k = tmp.next();
+					this.buf.b += ":";
+					this.buf.b += k == null?"null":"" + k;
+					this.serialize(v4.h[k]);
+				}
+				this.buf.b += "h";
+				break;
+			case haxe_ds_ObjectMap:
+				this.buf.b += "M";
+				var v5 = v;
+				var tmp1 = v5.keys();
+				while(tmp1.hasNext()) {
+					var k1 = tmp1.next();
+					var id = Reflect.field(k1,"__id__");
+					Reflect.deleteField(k1,"__id__");
+					this.serialize(k1);
+					k1.__id__ = id;
+					this.serialize(v5.h[k1.__id__]);
+				}
+				this.buf.b += "h";
+				break;
+			case haxe_ds_StringMap:
+				this.buf.b += "b";
+				var v6 = v;
+				var tmp2 = v6.keys();
+				while(tmp2.hasNext()) {
+					var k2 = tmp2.next();
+					this.serializeString(k2);
+					this.serialize(__map_reserved[k2] != null?v6.getReserved(k2):v6.h[k2]);
+				}
+				this.buf.b += "h";
+				break;
+			case haxe_io_Bytes:
+				var v7 = v;
+				this.buf.b += "s";
+				this.buf.b += Std.string(Math.ceil(v7.length * 8 / 6));
+				this.buf.b += ":";
+				var i1 = 0;
+				var max = v7.length - 2;
+				var b64 = haxe_Serializer.BASE64_CODES;
+				if(b64 == null) {
+					var length = haxe_Serializer.BASE64.length;
+					b64 = new Array(length);
+					var _g11 = 0;
+					var _g3 = haxe_Serializer.BASE64.length;
+					while(_g11 < _g3) {
+						var i2 = _g11++;
+						b64[i2] = HxOverrides.cca(haxe_Serializer.BASE64,i2);
+					}
+					haxe_Serializer.BASE64_CODES = b64;
+				}
+				while(i1 < max) {
+					var b1 = v7.b[i1++];
+					var b2 = v7.b[i1++];
+					var b3 = v7.b[i1++];
+					this.buf.b += String.fromCharCode(b64[b1 >> 2]);
+					this.buf.b += String.fromCharCode(b64[(b1 << 4 | b2 >> 4) & 63]);
+					this.buf.b += String.fromCharCode(b64[(b2 << 2 | b3 >> 6) & 63]);
+					this.buf.b += String.fromCharCode(b64[b3 & 63]);
+				}
+				if(i1 == max) {
+					var b11 = v7.b[i1++];
+					var b21 = v7.b[i1++];
+					this.buf.b += String.fromCharCode(b64[b11 >> 2]);
+					this.buf.b += String.fromCharCode(b64[(b11 << 4 | b21 >> 4) & 63]);
+					this.buf.b += String.fromCharCode(b64[b21 << 2 & 63]);
+				} else if(i1 == max + 1) {
+					var b12 = v7.b[i1++];
+					this.buf.b += String.fromCharCode(b64[b12 >> 2]);
+					this.buf.b += String.fromCharCode(b64[b12 << 4 & 63]);
+				}
+				break;
+			default:
+				if(this.useCache) {
+					this.cache.pop();
+				}
+				if(v.hxSerialize != null) {
+					this.buf.b += "C";
+					this.serializeString(Type.getClassName(c));
+					if(this.useCache) {
+						this.cache.push(v);
+					}
+					v.hxSerialize(this);
+					this.buf.b += "g";
+				} else {
+					this.buf.b += "c";
+					this.serializeString(Type.getClassName(c));
+					if(this.useCache) {
+						this.cache.push(v);
+					}
+					this.serializeFields(v);
+				}
+			}
+			break;
+		case 7:
+			if(this.useCache) {
+				if(this.serializeRef(v)) {
+					return;
+				}
+				this.cache.pop();
+			}
+			this.buf.b += Std.string(this.useEnumIndex?"j":"w");
+			this.serializeString(Type.getEnumName(_g[2]));
+			if(this.useEnumIndex) {
+				this.buf.b += ":";
+				this.buf.b += Std.string(v[1]);
+			} else {
+				this.serializeString(v[0]);
+			}
+			this.buf.b += ":";
+			var l1 = v.length;
+			this.buf.b += Std.string(l1 - 2);
+			var _g12 = 2;
+			var _g4 = l1;
+			while(_g12 < _g4) this.serialize(v[_g12++]);
+			if(this.useCache) {
+				this.cache.push(v);
+			}
+			break;
+		default:
+			throw new js__$Boot_HaxeError("Cannot serialize " + Std.string(v));
+		}
+	}
+	,__class__: haxe_Serializer
 };
 var haxe_Timer = function(time_ms) {
 	var me = this;
@@ -27171,6 +28797,18 @@ haxe_io_Bytes.prototype = {
 			this.data = new DataView(this.b.buffer,this.b.byteOffset,this.b.byteLength);
 		}
 		return this.data.getFloat32(pos,true);
+	}
+	,setFloat: function(pos,v) {
+		if(this.data == null) {
+			this.data = new DataView(this.b.buffer,this.b.byteOffset,this.b.byteLength);
+		}
+		this.data.setFloat32(pos,v,true);
+	}
+	,setUInt16: function(pos,v) {
+		if(this.data == null) {
+			this.data = new DataView(this.b.buffer,this.b.byteOffset,this.b.byteLength);
+		}
+		this.data.setUint16(pos,v,true);
 	}
 	,getInt32: function(pos) {
 		if(this.data == null) {
@@ -27954,13 +29592,32 @@ haxe_ds_StringMap.prototype = {
 	}
 	,__class__: haxe_ds_StringMap
 };
+var haxe_ds__$Vector_Vector_$Impl_$ = {};
+$hxClasses["haxe.ds._Vector.Vector_Impl_"] = haxe_ds__$Vector_Vector_$Impl_$;
+haxe_ds__$Vector_Vector_$Impl_$.__name__ = ["haxe","ds","_Vector","Vector_Impl_"];
+haxe_ds__$Vector_Vector_$Impl_$.toArray = function(this1) {
+	var a = [];
+	var len = this1.length;
+	var _g1 = 0;
+	while(_g1 < len) {
+		var i = _g1++;
+		a[i] = this1[i];
+	}
+	return a;
+};
 var haxe_io_BytesBuffer = function() {
 	this.b = [];
 };
 $hxClasses["haxe.io.BytesBuffer"] = haxe_io_BytesBuffer;
 haxe_io_BytesBuffer.__name__ = ["haxe","io","BytesBuffer"];
 haxe_io_BytesBuffer.prototype = {
-	getBytes: function() {
+	addInt32: function(v) {
+		this.b.push(v & 255);
+		this.b.push(v >> 8 & 255);
+		this.b.push(v >> 16 & 255);
+		this.b.push(v >>> 24);
+	}
+	,getBytes: function() {
 		var bytes = new haxe_io_Bytes(new Uint8Array(this.b).buffer);
 		this.b = null;
 		return bytes;
@@ -28252,7 +29909,7 @@ haxe_io_Eof.prototype = {
 	}
 	,__class__: haxe_io_Eof
 };
-var haxe_io_Error = $hxClasses["haxe.io.Error"] = { __ename__ : true, __constructs__ : ["Blocked","Overflow","OutsideBounds","Custom"] };
+var haxe_io_Error = $hxClasses["haxe.io.Error"] = { __ename__ : ["haxe","io","Error"], __constructs__ : ["Blocked","Overflow","OutsideBounds","Custom"] };
 haxe_io_Error.Blocked = ["Blocked",0];
 haxe_io_Error.Blocked.toString = $estr;
 haxe_io_Error.Blocked.__enum__ = haxe_io_Error;
@@ -28312,7 +29969,7 @@ haxe_io_FPHelper.doubleToI64 = function(v) {
 	}
 	return i64;
 };
-var haxe_macro_Binop = $hxClasses["haxe.macro.Binop"] = { __ename__ : true, __constructs__ : ["OpAdd","OpMult","OpDiv","OpSub","OpAssign","OpEq","OpNotEq","OpGt","OpGte","OpLt","OpLte","OpAnd","OpOr","OpXor","OpBoolAnd","OpBoolOr","OpShl","OpShr","OpUShr","OpMod","OpAssignOp","OpInterval","OpArrow"] };
+var haxe_macro_Binop = $hxClasses["haxe.macro.Binop"] = { __ename__ : ["haxe","macro","Binop"], __constructs__ : ["OpAdd","OpMult","OpDiv","OpSub","OpAssign","OpEq","OpNotEq","OpGt","OpGte","OpLt","OpLte","OpAnd","OpOr","OpXor","OpBoolAnd","OpBoolOr","OpShl","OpShr","OpUShr","OpMod","OpAssignOp","OpInterval","OpArrow"] };
 haxe_macro_Binop.OpAdd = ["OpAdd",0];
 haxe_macro_Binop.OpAdd.toString = $estr;
 haxe_macro_Binop.OpAdd.__enum__ = haxe_macro_Binop;
@@ -28381,7 +30038,7 @@ haxe_macro_Binop.OpArrow = ["OpArrow",22];
 haxe_macro_Binop.OpArrow.toString = $estr;
 haxe_macro_Binop.OpArrow.__enum__ = haxe_macro_Binop;
 haxe_macro_Binop.__empty_constructs__ = [haxe_macro_Binop.OpAdd,haxe_macro_Binop.OpMult,haxe_macro_Binop.OpDiv,haxe_macro_Binop.OpSub,haxe_macro_Binop.OpAssign,haxe_macro_Binop.OpEq,haxe_macro_Binop.OpNotEq,haxe_macro_Binop.OpGt,haxe_macro_Binop.OpGte,haxe_macro_Binop.OpLt,haxe_macro_Binop.OpLte,haxe_macro_Binop.OpAnd,haxe_macro_Binop.OpOr,haxe_macro_Binop.OpXor,haxe_macro_Binop.OpBoolAnd,haxe_macro_Binop.OpBoolOr,haxe_macro_Binop.OpShl,haxe_macro_Binop.OpShr,haxe_macro_Binop.OpUShr,haxe_macro_Binop.OpMod,haxe_macro_Binop.OpInterval,haxe_macro_Binop.OpArrow];
-var haxe_macro_Unop = $hxClasses["haxe.macro.Unop"] = { __ename__ : true, __constructs__ : ["OpIncrement","OpDecrement","OpNot","OpNeg","OpNegBits"] };
+var haxe_macro_Unop = $hxClasses["haxe.macro.Unop"] = { __ename__ : ["haxe","macro","Unop"], __constructs__ : ["OpIncrement","OpDecrement","OpNot","OpNeg","OpNegBits"] };
 haxe_macro_Unop.OpIncrement = ["OpIncrement",0];
 haxe_macro_Unop.OpIncrement.toString = $estr;
 haxe_macro_Unop.OpIncrement.__enum__ = haxe_macro_Unop;
@@ -29163,7 +30820,38 @@ hxd_App.prototype = {
 		}
 		this.s2d.setElapsedTime(hxd_Timer.tmod / 60);
 		this.s3d.setElapsedTime(hxd_Timer.tmod / 60);
-		this.engine.render(this.s3d);
+		if(hxd_Key.isDown(17) && hxd_Key.isPressed(123)) {
+			var driver = this.engine.driver;
+			var old = driver.logEnable;
+			var log = new h3d_impl_LogDriver(driver);
+			log.logLines = [];
+			this.engine.setDriver(log);
+			try {
+				this.engine.render(this.s3d);
+			} catch( e ) {
+				if (e instanceof js__$Boot_HaxeError) e = e.val;
+				log.logLines.push(Std.string(e));
+			}
+			driver.logEnable = old;
+			this.engine.setDriver(driver);
+			hxd_File.saveBytes("log.txt",haxe_io_Bytes.ofString(log.logLines.join("\n")));
+		} else {
+			var value = this.engine.driver;
+			var scnDriver = (value instanceof h3d_impl_ScnDriver)?value:null;
+			if(hxd_Key.isDown(17) && hxd_Key.isDown(122)) {
+				if(scnDriver == null) {
+					this.engine.setDriver(new h3d_impl_ScnDriver(this.engine.driver));
+					this.engine.mem.onContextLost();
+					this.engine.onContextLost();
+					this.engine.resize(this.engine.width,this.engine.height);
+					this.engine.render(this.s3d);
+				}
+			} else if(scnDriver != null) {
+				this.engine.setDriver(scnDriver.getDriver());
+				hxd_File.saveBytes("record.scn",scnDriver.getBytes());
+			}
+			this.engine.render(this.s3d);
+		}
 	}
 	,update: function(dt) {
 	}
@@ -29413,7 +31101,7 @@ hxd_Charset.prototype = {
 	}
 	,__class__: hxd_Charset
 };
-var hxd_EventKind = $hxClasses["hxd.EventKind"] = { __ename__ : true, __constructs__ : ["EPush","ERelease","EMove","EOver","EOut","EWheel","EFocus","EFocusLost","EKeyDown","EKeyUp","EReleaseOutside"] };
+var hxd_EventKind = $hxClasses["hxd.EventKind"] = { __ename__ : ["hxd","EventKind"], __constructs__ : ["EPush","ERelease","EMove","EOver","EOut","EWheel","EFocus","EFocusLost","EKeyDown","EKeyUp","EReleaseOutside"] };
 hxd_EventKind.EPush = ["EPush",0];
 hxd_EventKind.EPush.toString = $estr;
 hxd_EventKind.EPush.__enum__ = hxd_EventKind;
@@ -29467,6 +31155,52 @@ hxd_Event.prototype = {
 		return Std.string(this.kind) + "[" + (this.relX | 0) + "," + (this.relY | 0) + "]";
 	}
 	,__class__: hxd_Event
+};
+var hxd_File = function() { };
+$hxClasses["hxd.File"] = hxd_File;
+hxd_File.__name__ = ["hxd","File"];
+hxd_File.browse = function(onSelect,options) {
+	if(options == null) {
+		options = { };
+	}
+	throw new js__$Boot_HaxeError("Not supported");
+};
+hxd_File.saveAs = function(dataContent,options) {
+	if(options == null) {
+		options = { };
+	}
+	throw new js__$Boot_HaxeError("Not supported");
+};
+hxd_File.exists = function(path) {
+	throw new js__$Boot_HaxeError("Not supported");
+};
+hxd_File["delete"] = function(path) {
+	throw new js__$Boot_HaxeError("Not supported");
+};
+hxd_File.listDirectory = function(path) {
+	throw new js__$Boot_HaxeError("Not supported");
+};
+hxd_File.getBytes = function(path) {
+	throw new js__$Boot_HaxeError("Not supported");
+};
+hxd_File.saveBytes = function(path,data) {
+	throw new js__$Boot_HaxeError("Not supported");
+};
+hxd_File.saveBytesAt = function(path,data,dataPos,dataSize,filePos) {
+	throw new js__$Boot_HaxeError("Not supported");
+};
+hxd_File.load = function(path,onLoad,onError) {
+	if(onError == null) {
+		onError = function(_) {
+		};
+	}
+	throw new js__$Boot_HaxeError("Not supported");
+};
+hxd_File.createDirectory = function(path) {
+	throw new js__$Boot_HaxeError("Not supported");
+};
+hxd_File.applicationPath = function() {
+	throw new js__$Boot_HaxeError("Not supported");
 };
 var hxd__$FloatBuffer_InnerIterator = function(b) {
 	this.b = b;
@@ -29575,13 +31309,24 @@ hxd_Key.isDown = function(code) {
 	return hxd_Key.keyPressed[code] > 0;
 };
 hxd_Key.getFrame = function() {
+	if(h3d_Engine.CURRENT == null) {
+		throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+	}
 	return h3d_Engine.CURRENT.frameCount + 1;
 };
 hxd_Key.isPressed = function(code) {
-	return hxd_Key.keyPressed[code] == h3d_Engine.CURRENT.frameCount + 1;
+	var tmp = hxd_Key.keyPressed[code];
+	if(h3d_Engine.CURRENT == null) {
+		throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+	}
+	return tmp == h3d_Engine.CURRENT.frameCount + 1;
 };
 hxd_Key.isReleased = function(code) {
-	return hxd_Key.keyPressed[code] == -(h3d_Engine.CURRENT.frameCount + 1);
+	var tmp = hxd_Key.keyPressed[code];
+	if(h3d_Engine.CURRENT == null) {
+		throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+	}
+	return tmp == -(h3d_Engine.CURRENT.frameCount + 1);
 };
 hxd_Key.initialize = function() {
 	if(hxd_Key.initDone) {
@@ -29601,19 +31346,39 @@ hxd_Key.dispose = function() {
 hxd_Key.onEvent = function(e) {
 	switch(e.kind[1]) {
 	case 0:
-		hxd_Key.keyPressed[e.button] = h3d_Engine.CURRENT.frameCount + 1;
+		var tmp = e.button;
+		if(h3d_Engine.CURRENT == null) {
+			throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+		}
+		hxd_Key.keyPressed[tmp] = h3d_Engine.CURRENT.frameCount + 1;
 		break;
 	case 1:
-		hxd_Key.keyPressed[e.button] = -(h3d_Engine.CURRENT.frameCount + 1);
+		var tmp1 = e.button;
+		if(h3d_Engine.CURRENT == null) {
+			throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+		}
+		hxd_Key.keyPressed[tmp1] = -(h3d_Engine.CURRENT.frameCount + 1);
 		break;
 	case 5:
-		hxd_Key.keyPressed[e.wheelDelta > 0?3:2] = h3d_Engine.CURRENT.frameCount + 1;
+		var tmp2 = e.wheelDelta > 0?3:2;
+		if(h3d_Engine.CURRENT == null) {
+			throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+		}
+		hxd_Key.keyPressed[tmp2] = h3d_Engine.CURRENT.frameCount + 1;
 		break;
 	case 8:
-		hxd_Key.keyPressed[e.keyCode] = h3d_Engine.CURRENT.frameCount + 1;
+		var tmp3 = e.keyCode;
+		if(h3d_Engine.CURRENT == null) {
+			throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+		}
+		hxd_Key.keyPressed[tmp3] = h3d_Engine.CURRENT.frameCount + 1;
 		break;
 	case 9:
-		hxd_Key.keyPressed[e.keyCode] = -(h3d_Engine.CURRENT.frameCount + 1);
+		var tmp4 = e.keyCode;
+		if(h3d_Engine.CURRENT == null) {
+			throw new js__$Boot_HaxeError("no current context, please do this operation after engine init/creation");
+		}
+		hxd_Key.keyPressed[tmp4] = -(h3d_Engine.CURRENT.frameCount + 1);
 		break;
 	default:
 	}
@@ -29861,7 +31626,7 @@ hxd_Math.ufmod = function(value,modulo) {
 		return r + modulo;
 	}
 };
-var hxd_Flags = $hxClasses["hxd.Flags"] = { __ename__ : true, __constructs__ : ["ReadOnly","AlphaPremultiplied","FlipY"] };
+var hxd_Flags = $hxClasses["hxd.Flags"] = { __ename__ : ["hxd","Flags"], __constructs__ : ["ReadOnly","AlphaPremultiplied","FlipY"] };
 hxd_Flags.ReadOnly = ["ReadOnly",0];
 hxd_Flags.ReadOnly.toString = $estr;
 hxd_Flags.ReadOnly.__enum__ = hxd_Flags;
@@ -30787,7 +32552,7 @@ hxd_Stage.prototype = {
 	}
 	,__class__: hxd_Stage
 };
-var hxd_Cursor = $hxClasses["hxd.Cursor"] = { __ename__ : true, __constructs__ : ["Default","Button","Move","TextInput","Hide","Custom"] };
+var hxd_Cursor = $hxClasses["hxd.Cursor"] = { __ename__ : ["hxd","Cursor"], __constructs__ : ["Default","Button","Move","TextInput","Hide","Custom"] };
 hxd_Cursor.Default = ["Default",0];
 hxd_Cursor.Default.toString = $estr;
 hxd_Cursor.Default.__enum__ = hxd_Cursor;
@@ -30937,7 +32702,11 @@ hxd_Worker.prototype = {
 	}
 	,send: function(msg) {
 		if(!this.useWorker) {
-			this.debugPeer.handleMessage(msg);
+			var f = ($_=this.debugPeer,$bind($_,$_.handleMessage));
+			var a1 = msg;
+			haxe_Timer.delay(function() {
+				f(a1);
+			},1);
 			return;
 		}
 		throw new js__$Boot_HaxeError("TODO");
@@ -32069,7 +33838,7 @@ hxd_fmt_hmd__$Data_GeometryDataFormat_$Impl_$.toString = function(this1) {
 hxd_fmt_hmd__$Data_GeometryDataFormat_$Impl_$.fromInt = function(v) {
 	return v;
 };
-var hxd_fmt_hmd_Property = $hxClasses["hxd.fmt.hmd.Property"] = { __ename__ : true, __constructs__ : ["CameraFOVY","HasMaterialFlags"] };
+var hxd_fmt_hmd_Property = $hxClasses["hxd.fmt.hmd.Property"] = { __ename__ : ["hxd","fmt","hmd","Property"], __constructs__ : ["CameraFOVY","HasMaterialFlags"] };
 hxd_fmt_hmd_Property.CameraFOVY = function(v) { var $x = ["CameraFOVY",0,v]; $x.__enum__ = hxd_fmt_hmd_Property; $x.toString = $estr; return $x; };
 hxd_fmt_hmd_Property.HasMaterialFlags = ["HasMaterialFlags",1];
 hxd_fmt_hmd_Property.HasMaterialFlags.toString = $estr;
@@ -32151,7 +33920,7 @@ hxd_fmt_hmd_Geometry.prototype = {
 	}
 	,__class__: hxd_fmt_hmd_Geometry
 };
-var hxd_fmt_hmd_MaterialFlag = $hxClasses["hxd.fmt.hmd.MaterialFlag"] = { __ename__ : true, __constructs__ : ["HasLighting","CastShadows","ReceiveShadows","TextureWrap","IsVolumeDecal"] };
+var hxd_fmt_hmd_MaterialFlag = $hxClasses["hxd.fmt.hmd.MaterialFlag"] = { __ename__ : ["hxd","fmt","hmd","MaterialFlag"], __constructs__ : ["HasLighting","CastShadows","ReceiveShadows","TextureWrap","IsVolumeDecal"] };
 hxd_fmt_hmd_MaterialFlag.HasLighting = ["HasLighting",0];
 hxd_fmt_hmd_MaterialFlag.HasLighting.toString = $estr;
 hxd_fmt_hmd_MaterialFlag.HasLighting.__enum__ = hxd_fmt_hmd_MaterialFlag;
@@ -32203,7 +33972,7 @@ hxd_fmt_hmd_Model.__name__ = ["hxd","fmt","hmd","Model"];
 hxd_fmt_hmd_Model.prototype = {
 	__class__: hxd_fmt_hmd_Model
 };
-var hxd_fmt_hmd_AnimationFlag = $hxClasses["hxd.fmt.hmd.AnimationFlag"] = { __ename__ : true, __constructs__ : ["HasPosition","HasRotation","HasScale","HasUV","HasAlpha","SinglePosition","HasProps","Reserved"] };
+var hxd_fmt_hmd_AnimationFlag = $hxClasses["hxd.fmt.hmd.AnimationFlag"] = { __ename__ : ["hxd","fmt","hmd","AnimationFlag"], __constructs__ : ["HasPosition","HasRotation","HasScale","HasUV","HasAlpha","SinglePosition","HasProps","Reserved"] };
 hxd_fmt_hmd_AnimationFlag.HasPosition = ["HasPosition",0];
 hxd_fmt_hmd_AnimationFlag.HasPosition.toString = $estr;
 hxd_fmt_hmd_AnimationFlag.HasPosition.__enum__ = hxd_fmt_hmd_AnimationFlag;
@@ -32567,7 +34336,7 @@ hxd_fmt_hmd_Library.prototype = {
 		if(m.diffuseTexture != null) {
 			mat.set_texture(loadTexture(m.diffuseTexture));
 			if(mat.get_texture() == null) {
-				mat.set_texture(h3d_mat_Texture.fromColor(16711935));
+				mat.set_texture(h3d_mat_Texture.fromColor(16711935,null,{ fileName : "Library.hx", lineNumber : 262, className : "hxd.fmt.hmd.Library", methodName : "makeMaterial"}));
 			}
 		}
 		mat.set_blendMode(m.blendMode);
@@ -32696,7 +34465,7 @@ hxd_fmt_hmd_Library.prototype = {
 	,makeObject: function(loadTexture) {
 		if(loadTexture == null) {
 			loadTexture = function(_) {
-				return h3d_mat_Texture.fromColor(16711935);
+				return h3d_mat_Texture.fromColor(16711935,null,{ fileName : "Library.hx", lineNumber : 339, className : "hxd.fmt.hmd.Library", methodName : "makeObject"});
 			};
 		}
 		if(this.header.models.length == 0) {
@@ -33198,6 +34967,259 @@ hxd_fmt_hmd_Reader.prototype = {
 		return h;
 	}
 	,__class__: hxd_fmt_hmd_Reader
+};
+var hxd_fmt_scn_Operation = $hxClasses["hxd.fmt.scn.Operation"] = { __ename__ : ["hxd","fmt","scn","Operation"], __constructs__ : ["Log","Begin","Clear","Resize","SelectShader","Material","UploadShaderBuffers","UploadShaderTextures","AllocTexture","AllocIndexes","AllocVertexes","DisposeTexture","DisposeIndexes","DisposeVertexes","UploadTexture","UploadIndexes","UploadVertexes","SelectBuffer","SelectMultiBuffer","Draw","RenderZone","RenderTarget","Present"] };
+hxd_fmt_scn_Operation.Log = function(str) { var $x = ["Log",0,str]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.Begin = ["Begin",1];
+hxd_fmt_scn_Operation.Begin.toString = $estr;
+hxd_fmt_scn_Operation.Begin.__enum__ = hxd_fmt_scn_Operation;
+hxd_fmt_scn_Operation.Clear = function(color,depth,stencil) { var $x = ["Clear",2,color,depth,stencil]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.Resize = function(width,height) { var $x = ["Resize",3,width,height]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.SelectShader = function(id,data) { var $x = ["SelectShader",4,id,data]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.Material = function(bits) { var $x = ["Material",5,bits]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.UploadShaderBuffers = function(globals,vertex,fragment) { var $x = ["UploadShaderBuffers",6,globals,vertex,fragment]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.UploadShaderTextures = function(vertex,fragment) { var $x = ["UploadShaderTextures",7,vertex,fragment]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.AllocTexture = function(id,name,width,height,flags) { var $x = ["AllocTexture",8,id,name,width,height,flags]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.AllocIndexes = function(id,count) { var $x = ["AllocIndexes",9,id,count]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.AllocVertexes = function(id,size,stride,flags) { var $x = ["AllocVertexes",10,id,size,stride,flags]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.DisposeTexture = function(id) { var $x = ["DisposeTexture",11,id]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.DisposeIndexes = function(id) { var $x = ["DisposeIndexes",12,id]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.DisposeVertexes = function(id) { var $x = ["DisposeVertexes",13,id]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.UploadTexture = function(id,pixels,mipMap,side) { var $x = ["UploadTexture",14,id,pixels,mipMap,side]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.UploadIndexes = function(id,start,count,data) { var $x = ["UploadIndexes",15,id,start,count,data]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.UploadVertexes = function(id,start,count,data) { var $x = ["UploadVertexes",16,id,start,count,data]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.SelectBuffer = function(id,raw) { var $x = ["SelectBuffer",17,id,raw]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.SelectMultiBuffer = function(bufs) { var $x = ["SelectMultiBuffer",18,bufs]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.Draw = function(indexes,start,ntri) { var $x = ["Draw",19,indexes,start,ntri]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.RenderZone = function(x,y,width,height) { var $x = ["RenderZone",20,x,y,width,height]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.RenderTarget = function(tid) { var $x = ["RenderTarget",21,tid]; $x.__enum__ = hxd_fmt_scn_Operation; $x.toString = $estr; return $x; };
+hxd_fmt_scn_Operation.Present = ["Present",22];
+hxd_fmt_scn_Operation.Present.toString = $estr;
+hxd_fmt_scn_Operation.Present.__enum__ = hxd_fmt_scn_Operation;
+hxd_fmt_scn_Operation.__empty_constructs__ = [hxd_fmt_scn_Operation.Begin,hxd_fmt_scn_Operation.Present];
+var hxd_fmt_scn_Writer = function() {
+	this.out = new haxe_io_BytesBuffer();
+};
+$hxClasses["hxd.fmt.scn.Writer"] = hxd_fmt_scn_Writer;
+hxd_fmt_scn_Writer.__name__ = ["hxd","fmt","scn","Writer"];
+hxd_fmt_scn_Writer.prototype = {
+	write: function(d) {
+		this.out.b.push(d.version);
+		this.out.addInt32(d.ops.length);
+		var _g = 0;
+		var _g1 = d.ops;
+		while(_g < _g1.length) {
+			var op = _g1[_g];
+			++_g;
+			this.out.b.push(op[1]);
+			switch(op[1]) {
+			case 0:
+				var str = op[2];
+				this.out.addInt32(str.length);
+				var _this = this.out;
+				var src = haxe_io_Bytes.ofString(str);
+				var b2 = src.b;
+				var _g11 = 0;
+				var _g2 = src.length;
+				while(_g11 < _g2) _this.b.push(b2[_g11++]);
+				break;
+			case 2:
+				var stencil = op[4];
+				var depth = op[3];
+				var color = op[2];
+				this.out.b.push((color == null?0:1) | (depth == null?0:2) | (stencil == null?0:4));
+				if(color != null) {
+					this.out.addInt32(haxe_io_FPHelper.floatToI32(color.x));
+					this.out.addInt32(haxe_io_FPHelper.floatToI32(color.y));
+					this.out.addInt32(haxe_io_FPHelper.floatToI32(color.z));
+					this.out.addInt32(haxe_io_FPHelper.floatToI32(color.w));
+				}
+				if(depth != null) {
+					this.out.addInt32(haxe_io_FPHelper.floatToI32(depth));
+				}
+				if(stencil != null) {
+					this.out.addInt32(stencil);
+				}
+				break;
+			case 3:
+				this.out.addInt32(op[2]);
+				this.out.addInt32(op[3]);
+				break;
+			case 4:
+				var data = op[3];
+				this.out.addInt32(op[2]);
+				if(data != null) {
+					this.out.addInt32(data.length);
+					var _this1 = this.out;
+					var len = data.length;
+					if(len < 0 || len > data.length) {
+						throw new js__$Boot_HaxeError(haxe_io_Error.OutsideBounds);
+					}
+					var b21 = data.b;
+					var _g12 = 0;
+					while(_g12 < len) _this1.b.push(b21[_g12++]);
+				} else {
+					this.out.addInt32(0);
+				}
+				break;
+			case 5:
+				this.out.addInt32(op[2]);
+				break;
+			case 6:
+				var fragment = op[4];
+				var vertex = op[3];
+				this.out.b.push(op[2]?1:0);
+				this.out.addInt32(vertex.length);
+				var _g21 = 0;
+				while(_g21 < vertex.length) {
+					var v = vertex[_g21];
+					++_g21;
+					this.out.addInt32(haxe_io_FPHelper.floatToI32(v));
+				}
+				this.out.addInt32(fragment.length);
+				var _g22 = 0;
+				while(_g22 < fragment.length) {
+					var v1 = fragment[_g22];
+					++_g22;
+					this.out.addInt32(haxe_io_FPHelper.floatToI32(v1));
+				}
+				break;
+			case 7:
+				var fragment1 = op[3];
+				var vertex1 = op[2];
+				this.out.b.push(vertex1.length);
+				var _g23 = 0;
+				while(_g23 < vertex1.length) {
+					var t = vertex1[_g23];
+					++_g23;
+					this.out.addInt32(t);
+				}
+				this.out.b.push(fragment1.length);
+				var _g24 = 0;
+				while(_g24 < fragment1.length) {
+					var t1 = fragment1[_g24];
+					++_g24;
+					this.out.addInt32(t1);
+				}
+				break;
+			case 8:
+				var flags = op[6];
+				var h = op[5];
+				var w = op[4];
+				var name = op[3];
+				this.out.addInt32(op[2]);
+				if(name == null) {
+					this.out.addInt32(-1);
+				} else {
+					this.out.addInt32(name.length);
+					var _this2 = this.out;
+					var src1 = haxe_io_Bytes.ofString(name);
+					var b22 = src1.b;
+					var _g13 = 0;
+					var _g3 = src1.length;
+					while(_g13 < _g3) _this2.b.push(b22[_g13++]);
+				}
+				this.out.addInt32(w);
+				this.out.addInt32(h);
+				this.out.addInt32(flags);
+				break;
+			case 9:
+				this.out.addInt32(op[2]);
+				this.out.addInt32(op[3]);
+				break;
+			case 10:
+				this.out.addInt32(op[2]);
+				this.out.addInt32(op[3]);
+				this.out.addInt32(op[4]);
+				this.out.addInt32(op[5]);
+				break;
+			case 11:
+				this.out.addInt32(op[2]);
+				break;
+			case 12:
+				this.out.addInt32(op[2]);
+				break;
+			case 13:
+				this.out.addInt32(op[2]);
+				break;
+			case 14:
+				var side = op[5];
+				var mipMap = op[4];
+				var pixels = op[3];
+				this.out.addInt32(op[2]);
+				this.out.addInt32(pixels.width);
+				this.out.addInt32(pixels.height);
+				this.out.addInt32(pixels.format[1]);
+				this.out.addInt32(pixels.flags);
+				var _this3 = this.out;
+				var src2 = pixels.bytes;
+				var b23 = src2.b;
+				var _g14 = 0;
+				var _g4 = src2.length;
+				while(_g14 < _g4) _this3.b.push(b23[_g14++]);
+				this.out.addInt32(mipMap);
+				this.out.b.push(side);
+				break;
+			case 15:
+				var data1 = op[5];
+				this.out.addInt32(op[2]);
+				this.out.addInt32(op[3]);
+				this.out.addInt32(op[4]);
+				this.out.addInt32(data1.length);
+				var _this4 = this.out;
+				var b24 = data1.b;
+				var _g15 = 0;
+				var _g5 = data1.length;
+				while(_g15 < _g5) _this4.b.push(b24[_g15++]);
+				break;
+			case 16:
+				var data2 = op[5];
+				this.out.addInt32(op[2]);
+				this.out.addInt32(op[3]);
+				this.out.addInt32(op[4]);
+				this.out.addInt32(data2.length);
+				var _this5 = this.out;
+				var b25 = data2.b;
+				var _g16 = 0;
+				var _g6 = data2.length;
+				while(_g16 < _g6) _this5.b.push(b25[_g16++]);
+				break;
+			case 17:
+				this.out.addInt32(op[2]);
+				this.out.b.push(op[3]?1:0);
+				break;
+			case 18:
+				var bufs = op[2];
+				this.out.b.push(bufs.length);
+				var _g25 = 0;
+				while(_g25 < bufs.length) {
+					var b = bufs[_g25];
+					++_g25;
+					this.out.addInt32(b.vbuf);
+					this.out.b.push(b.offset);
+				}
+				break;
+			case 19:
+				this.out.addInt32(op[2]);
+				this.out.addInt32(op[3]);
+				this.out.addInt32(op[4]);
+				break;
+			case 20:
+				this.out.addInt32(op[2]);
+				this.out.addInt32(op[3]);
+				this.out.addInt32(op[4]);
+				this.out.addInt32(op[5]);
+				break;
+			case 21:
+				this.out.addInt32(op[2]);
+				break;
+			case 1:case 22:
+				break;
+			}
+		}
+		return this.out.getBytes();
+	}
+	,__class__: hxd_fmt_scn_Writer
 };
 var hxd_fs_FileEntry = function() { };
 $hxClasses["hxd.fs.FileEntry"] = hxd_fs_FileEntry;
@@ -33768,7 +35790,7 @@ hxd_impl_Tmp.saveBytes = function(b) {
 	}
 	hxd_impl_Tmp.bytes.push(b);
 };
-var hxd_inspect_Property = $hxClasses["hxd.inspect.Property"] = { __ename__ : true, __constructs__ : ["PBool","PInt","PFloat","PRange","PString","PEnum","PColor","PGroup","PTexture","PFloats"] };
+var hxd_inspect_Property = $hxClasses["hxd.inspect.Property"] = { __ename__ : ["hxd","inspect","Property"], __constructs__ : ["PBool","PInt","PFloat","PRange","PString","PEnum","PColor","PGroup","PTexture","PFloats"] };
 hxd_inspect_Property.PBool = function(name,get,set) { var $x = ["PBool",0,name,get,set]; $x.__enum__ = hxd_inspect_Property; $x.toString = $estr; return $x; };
 hxd_inspect_Property.PInt = function(name,get,set) { var $x = ["PInt",1,name,get,set]; $x.__enum__ = hxd_inspect_Property; $x.toString = $estr; return $x; };
 hxd_inspect_Property.PFloat = function(name,get,set) { var $x = ["PFloat",2,name,get,set]; $x.__enum__ = hxd_inspect_Property; $x.toString = $estr; return $x; };
@@ -34406,7 +36428,7 @@ hxd_res_FontBuilder.prototype = {
 		}
 		var rbmp = hxd_BitmapData.fromNative(ctx);
 		if(this.innerTex == null) {
-			this.innerTex = h3d_mat_Texture.fromBitmap(rbmp);
+			this.innerTex = h3d_mat_Texture.fromBitmap(rbmp,{ fileName : "FontBuilder.hx", lineNumber : 210, className : "hxd.res.FontBuilder", methodName : "build"});
 			this.font.tile = h2d_Tile.fromTexture(this.innerTex);
 			var _g3 = 0;
 			while(_g3 < all.length) {
@@ -34615,7 +36637,7 @@ hxd_res_Image.prototype = $extend(hxd_res_Resource.prototype,{
 			width = tw;
 			height = th;
 		}
-		this.tex = new h3d_mat_Texture(width,height,[h3d_mat_TextureFlags.NoAlloc]);
+		this.tex = new h3d_mat_Texture(width,height,[h3d_mat_TextureFlags.NoAlloc],null,{ fileName : "Image.hx", lineNumber : 221, className : "hxd.res.Image", methodName : "toTexture"});
 		if(hxd_res_Image.DEFAULT_FILTER != h3d_mat_Filter.Linear) {
 			this.tex.set_filter(hxd_res_Image.DEFAULT_FILTER);
 		}
@@ -34731,7 +36753,7 @@ hxd_res_Model.prototype = $extend(hxd_res_Resource.prototype,{
 	}
 	,__class__: hxd_res_Model
 });
-var hxd_res_Filter = $hxClasses["hxd.res.Filter"] = { __ename__ : true, __constructs__ : ["Fast","Chromatic"] };
+var hxd_res_Filter = $hxClasses["hxd.res.Filter"] = { __ename__ : ["hxd","res","Filter"], __constructs__ : ["Fast","Chromatic"] };
 hxd_res_Filter.Fast = ["Fast",0];
 hxd_res_Filter.Fast.toString = $estr;
 hxd_res_Filter.Fast.__enum__ = hxd_res_Filter;
@@ -34892,8 +36914,14 @@ hxd_res_NanoJpeg.prototype = {
 		this.pos += count;
 		this.size -= count;
 		this.length -= count;
+		if(this.size < 0) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 	}
 	,syntax: function(flag) {
+		if(flag) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 	}
 	,get: function(p) {
 		return this.bytes.b[this.pos + p];
@@ -34920,6 +36948,9 @@ hxd_res_NanoJpeg.prototype = {
 			this.bufbits += 8;
 			this.buf = this.buf << 8 | newbyte;
 			if(newbyte == 255) {
+				if(this.size == 0) {
+					throw new js__$Boot_HaxeError("Invalid JPEG file");
+				}
 				var marker = this.bytes.b[this.pos];
 				this.pos++;
 				this.size--;
@@ -34930,6 +36961,9 @@ hxd_res_NanoJpeg.prototype = {
 				case 0:case 255:
 					break;
 				default:
+					if((marker & 248) != 208) {
+						throw new js__$Boot_HaxeError("Invalid JPEG file");
+					}
 					this.buf = this.buf << 8 | marker;
 					this.bufbits += 8;
 				}
@@ -34949,26 +36983,59 @@ hxd_res_NanoJpeg.prototype = {
 		return r;
 	}
 	,njDecodeLength: function() {
+		if(this.size < 2) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		this.length = this.bytes.b[this.pos] << 8 | this.bytes.b[this.pos + 1];
+		if(this.length > this.size) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		this.pos += 2;
 		this.size -= 2;
 		this.length -= 2;
+		if(this.size < 0) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 	}
 	,njSkipMarker: function() {
+		if(this.size < 2) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		this.length = this.bytes.b[this.pos] << 8 | this.bytes.b[this.pos + 1];
+		if(this.length > this.size) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		this.pos += 2;
 		this.size -= 2;
 		this.length -= 2;
+		if(this.size < 0) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		var count = this.length;
 		this.pos += count;
 		this.size -= count;
 		this.length -= count;
+		if(this.size < 0) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 	}
 	,njDecodeSOF: function() {
+		if(this.size < 2) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		this.length = this.bytes.b[this.pos] << 8 | this.bytes.b[this.pos + 1];
+		if(this.length > this.size) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		this.pos += 2;
 		this.size -= 2;
 		this.length -= 2;
+		if(this.size < 0) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
+		if(this.length < 9) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		if(this.bytes.b[this.pos] != 8) {
 			this.notSupported();
 		}
@@ -34978,11 +37045,17 @@ hxd_res_NanoJpeg.prototype = {
 		this.pos += 6;
 		this.size -= 6;
 		this.length -= 6;
+		if(this.size < 0) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		switch(this.ncomp) {
 		case 1:case 3:
 			break;
 		default:
 			this.notSupported();
+		}
+		if(this.length < this.ncomp * 3) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
 		}
 		var ssxmax = 0;
 		var ssymax = 0;
@@ -34992,17 +37065,29 @@ hxd_res_NanoJpeg.prototype = {
 			var c = this.comps[_g2++];
 			c.cid = this.bytes.b[this.pos];
 			c.ssx = this.bytes.b[this.pos + 1] >> 4;
+			if(c.ssx == 0) {
+				throw new js__$Boot_HaxeError("Invalid JPEG file");
+			}
 			if((c.ssx & c.ssx - 1) != 0) {
 				this.notSupported();
 			}
 			c.ssy = this.bytes.b[this.pos + 1] & 15;
+			if(c.ssy == 0) {
+				throw new js__$Boot_HaxeError("Invalid JPEG file");
+			}
 			if((c.ssy & c.ssy - 1) != 0) {
 				this.notSupported();
 			}
 			c.qtsel = this.bytes.b[this.pos + 2];
+			if((c.qtsel & 252) != 0) {
+				throw new js__$Boot_HaxeError("Invalid JPEG file");
+			}
 			this.pos += 3;
 			this.size -= 3;
 			this.length -= 3;
+			if(this.size < 0) {
+				throw new js__$Boot_HaxeError("Invalid JPEG file");
+			}
 			this.qtused |= 1 << c.qtsel;
 			if(c.ssx > ssxmax) {
 				ssxmax = c.ssx;
@@ -35038,14 +37123,29 @@ hxd_res_NanoJpeg.prototype = {
 		this.pos += count;
 		this.size -= count;
 		this.length -= count;
+		if(this.size < 0) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 	}
 	,njDecodeDQT: function() {
+		if(this.size < 2) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		this.length = this.bytes.b[this.pos] << 8 | this.bytes.b[this.pos + 1];
+		if(this.length > this.size) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		this.pos += 2;
 		this.size -= 2;
 		this.length -= 2;
+		if(this.size < 0) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		while(this.length >= 65) {
 			var i = this.bytes.b[this.pos];
+			if((i & 252) != 0) {
+				throw new js__$Boot_HaxeError("Invalid JPEG file");
+			}
 			this.qtavail |= 1 << i;
 			var t = this.qtab[i];
 			var _g = 0;
@@ -35056,15 +37156,33 @@ hxd_res_NanoJpeg.prototype = {
 			this.pos += 65;
 			this.size -= 65;
 			this.length -= 65;
+			if(this.size < 0) {
+				throw new js__$Boot_HaxeError("Invalid JPEG file");
+			}
+		}
+		if(this.length != 0) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
 		}
 	}
 	,njDecodeDHT: function() {
+		if(this.size < 2) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		this.length = this.bytes.b[this.pos] << 8 | this.bytes.b[this.pos + 1];
+		if(this.length > this.size) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		this.pos += 2;
 		this.size -= 2;
 		this.length -= 2;
+		if(this.size < 0) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		while(this.length >= 17) {
 			var i = this.bytes.b[this.pos];
+			if((i & 236) != 0) {
+				throw new js__$Boot_HaxeError("Invalid JPEG file");
+			}
 			i = i >> 4 & 1 | (i & 3) << 1;
 			var _g = 0;
 			while(_g < 16) {
@@ -35074,6 +37192,9 @@ hxd_res_NanoJpeg.prototype = {
 			this.pos += 17;
 			this.size -= 17;
 			this.length -= 17;
+			if(this.size < 0) {
+				throw new js__$Boot_HaxeError("Invalid JPEG file");
+			}
 			var vlc = this.vlctab[i];
 			var vpos = 0;
 			var remain = 65536;
@@ -35086,7 +37207,13 @@ hxd_res_NanoJpeg.prototype = {
 				if(currcnt == 0) {
 					continue;
 				}
+				if(this.length < currcnt) {
+					throw new js__$Boot_HaxeError("Invalid JPEG file");
+				}
 				remain -= currcnt << 16 - codelen1;
+				if(remain < 0) {
+					throw new js__$Boot_HaxeError("Invalid JPEG file");
+				}
 				var _g2 = 0;
 				while(_g2 < currcnt) {
 					var code = this.bytes.b[this.pos + _g2++];
@@ -35101,27 +37228,51 @@ hxd_res_NanoJpeg.prototype = {
 				this.pos += currcnt;
 				this.size -= currcnt;
 				this.length -= currcnt;
+				if(this.size < 0) {
+					throw new js__$Boot_HaxeError("Invalid JPEG file");
+				}
 			}
 			while(remain-- != 0) {
 				vlc.b[vpos] = 0;
 				vpos += 2;
 			}
 		}
+		if(this.length != 0) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 	}
 	,njDecodeDRI: function() {
+		if(this.size < 2) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		this.length = this.bytes.b[this.pos] << 8 | this.bytes.b[this.pos + 1];
+		if(this.length > this.size) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		this.pos += 2;
 		this.size -= 2;
 		this.length -= 2;
+		if(this.size < 0) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
+		if(this.length < 2) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		this.rstinterval = this.bytes.b[this.pos] << 8 | this.bytes.b[this.pos + 1];
 		var count = this.length;
 		this.pos += count;
 		this.size -= count;
 		this.length -= count;
+		if(this.size < 0) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 	}
 	,njGetVLC: function(vlc) {
 		var value = this.njShowBits(16);
 		var bits = vlc.b[value << 1];
+		if(bits == 0) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		if(this.bufbits < bits) {
 			this.njShowBits(bits);
 		}
@@ -35293,6 +37444,9 @@ hxd_res_NanoJpeg.prototype = {
 		var vlc = this.vlctab[c.dctabsel];
 		var value1 = this.njShowBits(16);
 		var bits = vlc.b[value1 << 1];
+		if(bits == 0) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		if(this.bufbits < bits) {
 			this.njShowBits(bits);
 		}
@@ -35319,6 +37473,9 @@ hxd_res_NanoJpeg.prototype = {
 		while(true) {
 			var value2 = this.njShowBits(16);
 			var bits1 = at.b[value2 << 1];
+			if(bits1 == 0) {
+				throw new js__$Boot_HaxeError("Invalid JPEG file");
+			}
 			if(this.bufbits < bits1) {
 				this.njShowBits(bits1);
 			}
@@ -35340,8 +37497,13 @@ hxd_res_NanoJpeg.prototype = {
 			if(this.vlcCode == 0) {
 				break;
 			}
-			var tmp1 = (this.vlcCode & 15) == 0;
+			if((this.vlcCode & 15) == 0 && this.vlcCode != 240) {
+				throw new js__$Boot_HaxeError("Invalid JPEG file");
+			}
 			coef += (this.vlcCode >> 4) + 1;
+			if(coef > 63) {
+				throw new js__$Boot_HaxeError("Invalid JPEG file");
+			}
 			this.block[this.njZZ[coef]] = value * qt[coef];
 			if(!(coef < 63)) {
 				break;
@@ -35360,19 +37522,19 @@ hxd_res_NanoJpeg.prototype = {
 			var x7;
 			var x8;
 			x1 = this.block[bp + 4] << 11;
-			var tmp2 = x1;
+			var tmp1 = x1;
 			x2 = this.block[bp + 6];
-			var tmp3 = tmp2 | x2;
+			var tmp2 = tmp1 | x2;
 			x3 = this.block[bp + 2];
-			var tmp4 = tmp3 | x3;
+			var tmp3 = tmp2 | x3;
 			x4 = this.block[bp + 1];
-			var tmp5 = tmp4 | x4;
+			var tmp4 = tmp3 | x4;
 			x5 = this.block[bp + 7];
-			var tmp6 = tmp5 | x5;
+			var tmp5 = tmp4 | x5;
 			x6 = this.block[bp + 5];
-			var tmp7 = tmp6 | x6;
+			var tmp6 = tmp5 | x6;
 			x7 = this.block[bp + 3];
-			if((tmp7 | x7) == 0) {
+			if((tmp6 | x7) == 0) {
 				this.block[bp] = this.block[bp + 1] = this.block[bp + 2] = this.block[bp + 3] = this.block[bp + 4] = this.block[bp + 5] = this.block[bp + 6] = this.block[bp + 7] = this.block[bp] << 3;
 			} else {
 				x0 = (this.block[bp] << 11) + 128;
@@ -35422,19 +37584,19 @@ hxd_res_NanoJpeg.prototype = {
 			var x71;
 			var x81;
 			x11 = this.block[coef1 + 32] << 8;
-			var tmp8 = x11;
+			var tmp7 = x11;
 			x21 = this.block[coef1 + 48];
-			var tmp9 = tmp8 | x21;
+			var tmp8 = tmp7 | x21;
 			x31 = this.block[coef1 + 16];
-			var tmp10 = tmp9 | x31;
+			var tmp9 = tmp8 | x31;
 			x41 = this.block[coef1 + 8];
-			var tmp11 = tmp10 | x41;
+			var tmp10 = tmp9 | x41;
 			x51 = this.block[coef1 + 56];
-			var tmp12 = tmp11 | x51;
+			var tmp11 = tmp10 | x51;
 			x61 = this.block[coef1 + 40];
-			var tmp13 = tmp12 | x61;
+			var tmp12 = tmp11 | x61;
 			x71 = this.block[coef1 + 24];
-			if((tmp13 | x71) == 0) {
+			if((tmp12 | x71) == 0) {
 				var x = (this.block[coef1] + 32 >> 6) + 128;
 				if(x < 0) {
 					x11 = 0;
@@ -35502,25 +37664,49 @@ hxd_res_NanoJpeg.prototype = {
 		throw new js__$Boot_HaxeError("This JPG file is not supported");
 	}
 	,njDecodeScan: function() {
+		if(this.size < 2) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		this.length = this.bytes.b[this.pos] << 8 | this.bytes.b[this.pos + 1];
+		if(this.length > this.size) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		this.pos += 2;
 		this.size -= 2;
 		this.length -= 2;
+		if(this.size < 0) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
+		if(this.length < 4 + 2 * this.ncomp) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		if(this.bytes.b[this.pos] != this.ncomp) {
 			this.notSupported();
 		}
 		this.pos += 1;
 		this.size -= 1;
 		this.length -= 1;
+		if(this.size < 0) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		var _g1 = 0;
 		var _g = this.ncomp;
 		while(_g1 < _g) {
 			var c = this.comps[_g1++];
+			if(this.bytes.b[this.pos] != c.cid) {
+				throw new js__$Boot_HaxeError("Invalid JPEG file");
+			}
+			if((this.bytes.b[this.pos + 1] & 236) != 0) {
+				throw new js__$Boot_HaxeError("Invalid JPEG file");
+			}
 			c.dctabsel = this.bytes.b[this.pos + 1] >> 4 << 1;
 			c.actabsel = (this.bytes.b[this.pos + 1] & 3) << 1 | 1;
 			this.pos += 2;
 			this.size -= 2;
 			this.length -= 2;
+			if(this.size < 0) {
+				throw new js__$Boot_HaxeError("Invalid JPEG file");
+			}
 		}
 		var start = this.bytes.b[this.pos];
 		var count = this.bytes.b[this.pos];
@@ -35531,12 +37717,16 @@ hxd_res_NanoJpeg.prototype = {
 		this.pos += count1;
 		this.size -= count1;
 		this.length -= count1;
+		if(this.size < 0) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		if(this.progressive) {
 			throw new js__$Boot_HaxeError("Unsupported progressive JPG");
 		}
 		var mbx = 0;
 		var mby = 0;
 		var rstcount = this.rstinterval;
+		var nextrst = 0;
 		while(true) {
 			var _g11 = 0;
 			var _g2 = this.ncomp;
@@ -35559,8 +37749,12 @@ hxd_res_NanoJpeg.prototype = {
 			}
 			if(this.rstinterval != 0 && --rstcount == 0) {
 				this.bufbits &= 248;
-				this.njShowBits(16);
+				var r = this.njShowBits(16);
 				this.bufbits -= 16;
+				if((r & 65528) != 65488 || (r & 7) != nextrst) {
+					throw new js__$Boot_HaxeError("Invalid JPEG file");
+				}
+				nextrst = nextrst + 1 & 7;
 				rstcount = this.rstinterval;
 				var _g6 = 0;
 				while(_g6 < 3) this.comps[_g6++].dcpred = 0;
@@ -35764,11 +37958,20 @@ hxd_res_NanoJpeg.prototype = {
 		this.pos += 2;
 		this.size -= 2;
 		this.length -= 2;
+		if(this.size < 0) {
+			throw new js__$Boot_HaxeError("Invalid JPEG file");
+		}
 		try {
 			while(true) {
+				if(this.size < 2 || this.bytes.b[this.pos] != 255) {
+					throw new js__$Boot_HaxeError("Invalid JPEG file");
+				}
 				this.pos += 2;
 				this.size -= 2;
 				this.length -= 2;
+				if(this.size < 0) {
+					throw new js__$Boot_HaxeError("Invalid JPEG file");
+				}
 				switch(this.bytes.b[this.pos + -1]) {
 				case 192:
 					this.njDecodeSOF();
@@ -35801,14 +38004,26 @@ hxd_res_NanoJpeg.prototype = {
 					this.njDecodeDRI();
 					break;
 				case 254:
+					if(this.size < 2) {
+						throw new js__$Boot_HaxeError("Invalid JPEG file");
+					}
 					this.length = this.bytes.b[this.pos] << 8 | this.bytes.b[this.pos + 1];
+					if(this.length > this.size) {
+						throw new js__$Boot_HaxeError("Invalid JPEG file");
+					}
 					this.pos += 2;
 					this.size -= 2;
 					this.length -= 2;
+					if(this.size < 0) {
+						throw new js__$Boot_HaxeError("Invalid JPEG file");
+					}
 					var count = this.length;
 					this.pos += count;
 					this.size -= count;
 					this.length -= count;
+					if(this.size < 0) {
+						throw new js__$Boot_HaxeError("Invalid JPEG file");
+					}
 					break;
 				default:
 					switch(this.bytes.b[this.pos + -1] & 240) {
@@ -35816,14 +38031,26 @@ hxd_res_NanoJpeg.prototype = {
 						throw new js__$Boot_HaxeError("Unsupported jpeg type " + (this.bytes.b[this.pos + -1] & 15));
 						break;
 					case 224:
+						if(this.size < 2) {
+							throw new js__$Boot_HaxeError("Invalid JPEG file");
+						}
 						this.length = this.bytes.b[this.pos] << 8 | this.bytes.b[this.pos + 1];
+						if(this.length > this.size) {
+							throw new js__$Boot_HaxeError("Invalid JPEG file");
+						}
 						this.pos += 2;
 						this.size -= 2;
 						this.length -= 2;
+						if(this.size < 0) {
+							throw new js__$Boot_HaxeError("Invalid JPEG file");
+						}
 						var count1 = this.length;
 						this.pos += count1;
 						this.size -= count1;
 						this.length -= count1;
+						if(this.size < 0) {
+							throw new js__$Boot_HaxeError("Invalid JPEG file");
+						}
 						break;
 					default:
 						throw new js__$Boot_HaxeError("Unsupported jpeg tag 0x" + StringTools.hex(this.bytes.b[this.pos + -1],2));
@@ -36302,7 +38529,7 @@ hxd_snd_WavData.prototype = $extend(hxd_snd_Data.prototype,{
 	}
 	,__class__: hxd_snd_WavData
 });
-var hxd_snd__$Worker_Message = $hxClasses["hxd.snd._Worker.Message"] = { __ename__ : true, __constructs__ : ["Play","SetGlobalVolume","SetVolume","Fade","Stop","Queue","Loop","EndLoop","SetTime","FadeEnd","Active","StopAll","Sync","Dispose","Clean"] };
+var hxd_snd__$Worker_Message = $hxClasses["hxd.snd._Worker.Message"] = { __ename__ : ["hxd","snd","_Worker","Message"], __constructs__ : ["Play","SetGlobalVolume","SetVolume","Fade","Stop","Queue","Loop","EndLoop","SetTime","FadeEnd","Active","StopAll","Sync","Dispose","Clean"] };
 hxd_snd__$Worker_Message.Play = function(path,loop,volume,time) { var $x = ["Play",0,path,loop,volume,time]; $x.__enum__ = hxd_snd__$Worker_Message; $x.toString = $estr; return $x; };
 hxd_snd__$Worker_Message.SetGlobalVolume = function(volume) { var $x = ["SetGlobalVolume",1,volume]; $x.__enum__ = hxd_snd__$Worker_Message; $x.toString = $estr; return $x; };
 hxd_snd__$Worker_Message.SetVolume = function(id,volume) { var $x = ["SetVolume",2,id,volume]; $x.__enum__ = hxd_snd__$Worker_Message; $x.toString = $estr; return $x; };
@@ -36712,7 +38939,7 @@ hxd_snd_Worker.prototype = $extend(hxd_Worker.prototype,{
 	}
 	,__class__: hxd_snd_Worker
 });
-var hxsl_Type = $hxClasses["hxsl.Type"] = { __ename__ : true, __constructs__ : ["TVoid","TInt","TBool","TFloat","TString","TVec","TMat3","TMat4","TMat3x4","TBytes","TSampler2D","TSamplerCube","TStruct","TFun","TArray"] };
+var hxsl_Type = $hxClasses["hxsl.Type"] = { __ename__ : ["hxsl","Type"], __constructs__ : ["TVoid","TInt","TBool","TFloat","TString","TVec","TMat3","TMat4","TMat3x4","TBytes","TSampler2D","TSamplerCube","TStruct","TFun","TArray"] };
 hxsl_Type.TVoid = ["TVoid",0];
 hxsl_Type.TVoid.toString = $estr;
 hxsl_Type.TVoid.__enum__ = hxsl_Type;
@@ -36749,7 +38976,7 @@ hxsl_Type.TStruct = function(vl) { var $x = ["TStruct",12,vl]; $x.__enum__ = hxs
 hxsl_Type.TFun = function(variants) { var $x = ["TFun",13,variants]; $x.__enum__ = hxsl_Type; $x.toString = $estr; return $x; };
 hxsl_Type.TArray = function(t,size) { var $x = ["TArray",14,t,size]; $x.__enum__ = hxsl_Type; $x.toString = $estr; return $x; };
 hxsl_Type.__empty_constructs__ = [hxsl_Type.TVoid,hxsl_Type.TInt,hxsl_Type.TBool,hxsl_Type.TFloat,hxsl_Type.TString,hxsl_Type.TMat3,hxsl_Type.TMat4,hxsl_Type.TMat3x4,hxsl_Type.TSampler2D,hxsl_Type.TSamplerCube];
-var hxsl_VecType = $hxClasses["hxsl.VecType"] = { __ename__ : true, __constructs__ : ["VInt","VFloat","VBool"] };
+var hxsl_VecType = $hxClasses["hxsl.VecType"] = { __ename__ : ["hxsl","VecType"], __constructs__ : ["VInt","VFloat","VBool"] };
 hxsl_VecType.VInt = ["VInt",0];
 hxsl_VecType.VInt.toString = $estr;
 hxsl_VecType.VInt.__enum__ = hxsl_VecType;
@@ -36760,7 +38987,7 @@ hxsl_VecType.VBool = ["VBool",2];
 hxsl_VecType.VBool.toString = $estr;
 hxsl_VecType.VBool.__enum__ = hxsl_VecType;
 hxsl_VecType.__empty_constructs__ = [hxsl_VecType.VInt,hxsl_VecType.VFloat,hxsl_VecType.VBool];
-var hxsl_SizeDecl = $hxClasses["hxsl.SizeDecl"] = { __ename__ : true, __constructs__ : ["SConst","SVar"] };
+var hxsl_SizeDecl = $hxClasses["hxsl.SizeDecl"] = { __ename__ : ["hxsl","SizeDecl"], __constructs__ : ["SConst","SVar"] };
 hxsl_SizeDecl.SConst = function(v) { var $x = ["SConst",0,v]; $x.__enum__ = hxsl_SizeDecl; $x.toString = $estr; return $x; };
 hxsl_SizeDecl.SVar = function(v) { var $x = ["SVar",1,v]; $x.__enum__ = hxsl_SizeDecl; $x.toString = $estr; return $x; };
 hxsl_SizeDecl.__empty_constructs__ = [];
@@ -36779,7 +39006,7 @@ hxsl_Error.prototype = {
 	}
 	,__class__: hxsl_Error
 };
-var hxsl_VarKind = $hxClasses["hxsl.VarKind"] = { __ename__ : true, __constructs__ : ["Global","Input","Param","Var","Local","Output","Function"] };
+var hxsl_VarKind = $hxClasses["hxsl.VarKind"] = { __ename__ : ["hxsl","VarKind"], __constructs__ : ["Global","Input","Param","Var","Local","Output","Function"] };
 hxsl_VarKind.Global = ["Global",0];
 hxsl_VarKind.Global.toString = $estr;
 hxsl_VarKind.Global.__enum__ = hxsl_VarKind;
@@ -36802,7 +39029,7 @@ hxsl_VarKind.Function = ["Function",6];
 hxsl_VarKind.Function.toString = $estr;
 hxsl_VarKind.Function.__enum__ = hxsl_VarKind;
 hxsl_VarKind.__empty_constructs__ = [hxsl_VarKind.Global,hxsl_VarKind.Input,hxsl_VarKind.Param,hxsl_VarKind.Var,hxsl_VarKind.Local,hxsl_VarKind.Output,hxsl_VarKind.Function];
-var hxsl_VarQualifier = $hxClasses["hxsl.VarQualifier"] = { __ename__ : true, __constructs__ : ["Const","Private","Nullable","PerObject","Name","Shared","Precision","Range","Ignore"] };
+var hxsl_VarQualifier = $hxClasses["hxsl.VarQualifier"] = { __ename__ : ["hxsl","VarQualifier"], __constructs__ : ["Const","Private","Nullable","PerObject","Name","Shared","Precision","Range","Ignore"] };
 hxsl_VarQualifier.Const = function(max) { var $x = ["Const",0,max]; $x.__enum__ = hxsl_VarQualifier; $x.toString = $estr; return $x; };
 hxsl_VarQualifier.Private = ["Private",1];
 hxsl_VarQualifier.Private.toString = $estr;
@@ -36823,7 +39050,7 @@ hxsl_VarQualifier.Ignore = ["Ignore",8];
 hxsl_VarQualifier.Ignore.toString = $estr;
 hxsl_VarQualifier.Ignore.__enum__ = hxsl_VarQualifier;
 hxsl_VarQualifier.__empty_constructs__ = [hxsl_VarQualifier.Private,hxsl_VarQualifier.Nullable,hxsl_VarQualifier.PerObject,hxsl_VarQualifier.Shared,hxsl_VarQualifier.Ignore];
-var hxsl_Prec = $hxClasses["hxsl.Prec"] = { __ename__ : true, __constructs__ : ["Low","Medium","High"] };
+var hxsl_Prec = $hxClasses["hxsl.Prec"] = { __ename__ : ["hxsl","Prec"], __constructs__ : ["Low","Medium","High"] };
 hxsl_Prec.Low = ["Low",0];
 hxsl_Prec.Low.toString = $estr;
 hxsl_Prec.Low.__enum__ = hxsl_Prec;
@@ -36834,7 +39061,7 @@ hxsl_Prec.High = ["High",2];
 hxsl_Prec.High.toString = $estr;
 hxsl_Prec.High.__enum__ = hxsl_Prec;
 hxsl_Prec.__empty_constructs__ = [hxsl_Prec.Low,hxsl_Prec.Medium,hxsl_Prec.High];
-var hxsl_Const = $hxClasses["hxsl.Const"] = { __ename__ : true, __constructs__ : ["CNull","CBool","CInt","CFloat","CString"] };
+var hxsl_Const = $hxClasses["hxsl.Const"] = { __ename__ : ["hxsl","Const"], __constructs__ : ["CNull","CBool","CInt","CFloat","CString"] };
 hxsl_Const.CNull = ["CNull",0];
 hxsl_Const.CNull.toString = $estr;
 hxsl_Const.CNull.__enum__ = hxsl_Const;
@@ -36843,7 +39070,7 @@ hxsl_Const.CInt = function(v) { var $x = ["CInt",2,v]; $x.__enum__ = hxsl_Const;
 hxsl_Const.CFloat = function(v) { var $x = ["CFloat",3,v]; $x.__enum__ = hxsl_Const; $x.toString = $estr; return $x; };
 hxsl_Const.CString = function(v) { var $x = ["CString",4,v]; $x.__enum__ = hxsl_Const; $x.toString = $estr; return $x; };
 hxsl_Const.__empty_constructs__ = [hxsl_Const.CNull];
-var hxsl_ExprDef = $hxClasses["hxsl.ExprDef"] = { __ename__ : true, __constructs__ : ["EConst","EIdent","EParenthesis","EField","EBinop","EUnop","ECall","EBlock","EVars","EFunction","EIf","EDiscard","EFor","EReturn","EBreak","EContinue","EArray","EArrayDecl"] };
+var hxsl_ExprDef = $hxClasses["hxsl.ExprDef"] = { __ename__ : ["hxsl","ExprDef"], __constructs__ : ["EConst","EIdent","EParenthesis","EField","EBinop","EUnop","ECall","EBlock","EVars","EFunction","EIf","EDiscard","EFor","EReturn","EBreak","EContinue","EArray","EArrayDecl"] };
 hxsl_ExprDef.EConst = function(c) { var $x = ["EConst",0,c]; $x.__enum__ = hxsl_ExprDef; $x.toString = $estr; return $x; };
 hxsl_ExprDef.EIdent = function(i) { var $x = ["EIdent",1,i]; $x.__enum__ = hxsl_ExprDef; $x.toString = $estr; return $x; };
 hxsl_ExprDef.EParenthesis = function(e) { var $x = ["EParenthesis",2,e]; $x.__enum__ = hxsl_ExprDef; $x.toString = $estr; return $x; };
@@ -36869,7 +39096,7 @@ hxsl_ExprDef.EContinue.__enum__ = hxsl_ExprDef;
 hxsl_ExprDef.EArray = function(e,eindex) { var $x = ["EArray",16,e,eindex]; $x.__enum__ = hxsl_ExprDef; $x.toString = $estr; return $x; };
 hxsl_ExprDef.EArrayDecl = function(el) { var $x = ["EArrayDecl",17,el]; $x.__enum__ = hxsl_ExprDef; $x.toString = $estr; return $x; };
 hxsl_ExprDef.__empty_constructs__ = [hxsl_ExprDef.EDiscard,hxsl_ExprDef.EBreak,hxsl_ExprDef.EContinue];
-var hxsl_FunctionKind = $hxClasses["hxsl.FunctionKind"] = { __ename__ : true, __constructs__ : ["Vertex","Fragment","Init","Helper"] };
+var hxsl_FunctionKind = $hxClasses["hxsl.FunctionKind"] = { __ename__ : ["hxsl","FunctionKind"], __constructs__ : ["Vertex","Fragment","Init","Helper"] };
 hxsl_FunctionKind.Vertex = ["Vertex",0];
 hxsl_FunctionKind.Vertex.toString = $estr;
 hxsl_FunctionKind.Vertex.__enum__ = hxsl_FunctionKind;
@@ -36883,7 +39110,7 @@ hxsl_FunctionKind.Helper = ["Helper",3];
 hxsl_FunctionKind.Helper.toString = $estr;
 hxsl_FunctionKind.Helper.__enum__ = hxsl_FunctionKind;
 hxsl_FunctionKind.__empty_constructs__ = [hxsl_FunctionKind.Vertex,hxsl_FunctionKind.Fragment,hxsl_FunctionKind.Init,hxsl_FunctionKind.Helper];
-var hxsl_TGlobal = $hxClasses["hxsl.TGlobal"] = { __ename__ : true, __constructs__ : ["Radians","Degrees","Sin","Cos","Tan","Asin","Acos","Atan","Pow","Exp","Log","Exp2","Log2","Sqrt","Inversesqrt","Abs","Sign","Floor","Ceil","Fract","Mod","Min","Max","Clamp","Mix","Step","SmoothStep","Length","Distance","Dot","Cross","Normalize","LReflect","Texture2D","TextureCube","ToInt","ToFloat","ToBool","Vec2","Vec3","Vec4","IVec2","IVec3","IVec4","BVec2","BVec3","BVec4","Mat2","Mat3","Mat4","Mat3x4","Saturate","Pack","Unpack","PackNormal","UnpackNormal","DFdx","DFdy","Fwidth"] };
+var hxsl_TGlobal = $hxClasses["hxsl.TGlobal"] = { __ename__ : ["hxsl","TGlobal"], __constructs__ : ["Radians","Degrees","Sin","Cos","Tan","Asin","Acos","Atan","Pow","Exp","Log","Exp2","Log2","Sqrt","Inversesqrt","Abs","Sign","Floor","Ceil","Fract","Mod","Min","Max","Clamp","Mix","Step","SmoothStep","Length","Distance","Dot","Cross","Normalize","LReflect","Texture2D","TextureCube","ToInt","ToFloat","ToBool","Vec2","Vec3","Vec4","IVec2","IVec3","IVec4","BVec2","BVec3","BVec4","Mat2","Mat3","Mat4","Mat3x4","Saturate","Pack","Unpack","PackNormal","UnpackNormal","DFdx","DFdy","Fwidth"] };
 hxsl_TGlobal.Radians = ["Radians",0];
 hxsl_TGlobal.Radians.toString = $estr;
 hxsl_TGlobal.Radians.__enum__ = hxsl_TGlobal;
@@ -37062,7 +39289,7 @@ hxsl_TGlobal.Fwidth = ["Fwidth",58];
 hxsl_TGlobal.Fwidth.toString = $estr;
 hxsl_TGlobal.Fwidth.__enum__ = hxsl_TGlobal;
 hxsl_TGlobal.__empty_constructs__ = [hxsl_TGlobal.Radians,hxsl_TGlobal.Degrees,hxsl_TGlobal.Sin,hxsl_TGlobal.Cos,hxsl_TGlobal.Tan,hxsl_TGlobal.Asin,hxsl_TGlobal.Acos,hxsl_TGlobal.Atan,hxsl_TGlobal.Pow,hxsl_TGlobal.Exp,hxsl_TGlobal.Log,hxsl_TGlobal.Exp2,hxsl_TGlobal.Log2,hxsl_TGlobal.Sqrt,hxsl_TGlobal.Inversesqrt,hxsl_TGlobal.Abs,hxsl_TGlobal.Sign,hxsl_TGlobal.Floor,hxsl_TGlobal.Ceil,hxsl_TGlobal.Fract,hxsl_TGlobal.Mod,hxsl_TGlobal.Min,hxsl_TGlobal.Max,hxsl_TGlobal.Clamp,hxsl_TGlobal.Mix,hxsl_TGlobal.Step,hxsl_TGlobal.SmoothStep,hxsl_TGlobal.Length,hxsl_TGlobal.Distance,hxsl_TGlobal.Dot,hxsl_TGlobal.Cross,hxsl_TGlobal.Normalize,hxsl_TGlobal.LReflect,hxsl_TGlobal.Texture2D,hxsl_TGlobal.TextureCube,hxsl_TGlobal.ToInt,hxsl_TGlobal.ToFloat,hxsl_TGlobal.ToBool,hxsl_TGlobal.Vec2,hxsl_TGlobal.Vec3,hxsl_TGlobal.Vec4,hxsl_TGlobal.IVec2,hxsl_TGlobal.IVec3,hxsl_TGlobal.IVec4,hxsl_TGlobal.BVec2,hxsl_TGlobal.BVec3,hxsl_TGlobal.BVec4,hxsl_TGlobal.Mat2,hxsl_TGlobal.Mat3,hxsl_TGlobal.Mat4,hxsl_TGlobal.Mat3x4,hxsl_TGlobal.Saturate,hxsl_TGlobal.Pack,hxsl_TGlobal.Unpack,hxsl_TGlobal.PackNormal,hxsl_TGlobal.UnpackNormal,hxsl_TGlobal.DFdx,hxsl_TGlobal.DFdy,hxsl_TGlobal.Fwidth];
-var hxsl_Component = $hxClasses["hxsl.Component"] = { __ename__ : true, __constructs__ : ["X","Y","Z","W"] };
+var hxsl_Component = $hxClasses["hxsl.Component"] = { __ename__ : ["hxsl","Component"], __constructs__ : ["X","Y","Z","W"] };
 hxsl_Component.X = ["X",0];
 hxsl_Component.X.toString = $estr;
 hxsl_Component.X.__enum__ = hxsl_Component;
@@ -37076,7 +39303,7 @@ hxsl_Component.W = ["W",3];
 hxsl_Component.W.toString = $estr;
 hxsl_Component.W.__enum__ = hxsl_Component;
 hxsl_Component.__empty_constructs__ = [hxsl_Component.X,hxsl_Component.Y,hxsl_Component.Z,hxsl_Component.W];
-var hxsl_TExprDef = $hxClasses["hxsl.TExprDef"] = { __ename__ : true, __constructs__ : ["TConst","TVar","TGlobal","TParenthesis","TBlock","TBinop","TUnop","TVarDecl","TCall","TSwiz","TIf","TDiscard","TReturn","TFor","TContinue","TBreak","TArray","TArrayDecl"] };
+var hxsl_TExprDef = $hxClasses["hxsl.TExprDef"] = { __ename__ : ["hxsl","TExprDef"], __constructs__ : ["TConst","TVar","TGlobal","TParenthesis","TBlock","TBinop","TUnop","TVarDecl","TCall","TSwiz","TIf","TDiscard","TReturn","TFor","TContinue","TBreak","TArray","TArrayDecl"] };
 hxsl_TExprDef.TConst = function(c) { var $x = ["TConst",0,c]; $x.__enum__ = hxsl_TExprDef; $x.toString = $estr; return $x; };
 hxsl_TExprDef.TVar = function(v) { var $x = ["TVar",1,v]; $x.__enum__ = hxsl_TExprDef; $x.toString = $estr; return $x; };
 hxsl_TExprDef.TGlobal = function(g) { var $x = ["TGlobal",2,g]; $x.__enum__ = hxsl_TExprDef; $x.toString = $estr; return $x; };
@@ -37556,21 +39783,35 @@ hxsl_Cache.prototype = {
 		haxe_ds_ArraySort.sort(shaderDatas,function(s1,s2) {
 			return s2.p - s1.p;
 		});
-		var linker = new hxsl_Linker();
-		var _g = [];
-		var _g1 = 0;
-		while(_g1 < shaderDatas.length) {
-			var s3 = shaderDatas[_g1];
-			++_g1;
-			_g.push(s3.inst.shader);
+		var _g = 0;
+		while(_g < shaderDatas.length) {
+			var s3 = shaderDatas[_g];
+			++_g;
+			hxsl_Printer.check(s3.inst.shader);
 		}
-		var s4 = linker.link(_g,this.outVars[outVars]);
-		var paramVars = new haxe_ds_IntMap();
+		var linker = new hxsl_Linker();
+		var _g1 = [];
 		var _g11 = 0;
-		var _g2 = linker.allVars;
-		while(_g11 < _g2.length) {
-			var v = _g2[_g11];
+		while(_g11 < shaderDatas.length) {
+			var s4 = shaderDatas[_g11];
 			++_g11;
+			_g1.push(s4.inst.shader);
+		}
+		var s5 = linker.link(_g1,this.outVars[outVars]);
+		var _g12 = [];
+		var _g2 = 0;
+		while(_g2 < shaderDatas.length) {
+			var s6 = shaderDatas[_g2];
+			++_g2;
+			_g12.push(s6.inst.shader);
+		}
+		hxsl_Printer.check(s5,_g12);
+		var paramVars = new haxe_ds_IntMap();
+		var _g21 = 0;
+		var _g3 = linker.allVars;
+		while(_g21 < _g3.length) {
+			var v = _g3[_g21];
+			++_g21;
 			if(v.v.kind == hxsl_VarKind.Param) {
 				if(v.v.type[1] == 12) {
 					continue;
@@ -37579,15 +39820,21 @@ hxsl_Cache.prototype = {
 				paramVars.h[v.id] = { instance : inf.index, index : inf.inst.params.h[v.merged[0].id]};
 			}
 		}
-		var s5 = new hxsl_Splitter().split(s4);
-		var s6 = new hxsl_Dce().dce(s5.vertex,s5.fragment);
+		var s7 = new hxsl_Splitter().split(s5);
+		hxsl_Printer.check(s7.vertex,[s5]);
+		hxsl_Printer.check(s7.fragment,[s5]);
+		var s8 = new hxsl_Dce().dce(s7.vertex,s7.fragment);
+		hxsl_Printer.check(s8.vertex,[s7.vertex]);
+		hxsl_Printer.check(s8.fragment,[s7.fragment]);
 		var r = new hxsl_RuntimeShader();
-		r.vertex = this.flattenShader(s6.vertex,hxsl_FunctionKind.Vertex,paramVars);
+		r.vertex = this.flattenShader(s8.vertex,hxsl_FunctionKind.Vertex,paramVars);
 		r.vertex.vertex = true;
-		r.fragment = this.flattenShader(s6.fragment,hxsl_FunctionKind.Fragment,paramVars);
+		r.fragment = this.flattenShader(s8.fragment,hxsl_FunctionKind.Fragment,paramVars);
 		r.globals = new haxe_ds_IntMap();
 		this.initGlobals(r,r.vertex);
 		this.initGlobals(r,r.fragment);
+		hxsl_Printer.check(r.vertex.data,[s8.vertex]);
+		hxsl_Printer.check(r.fragment.data,[s8.fragment]);
 		r.signature = haxe_crypto_Md5.encode(hxsl_Printer.shaderToString(r.vertex.data) + hxsl_Printer.shaderToString(r.fragment.data));
 		var _this = this.byID;
 		var key = r.signature;
@@ -39785,7 +42032,7 @@ hxsl__$Flatten_Alloc.__name__ = ["hxsl","_Flatten","Alloc"];
 hxsl__$Flatten_Alloc.prototype = {
 	__class__: hxsl__$Flatten_Alloc
 };
-var hxsl_ARead = $hxClasses["hxsl.ARead"] = { __ename__ : true, __constructs__ : ["AIndex","AOffset"] };
+var hxsl_ARead = $hxClasses["hxsl.ARead"] = { __ename__ : ["hxsl","ARead"], __constructs__ : ["AIndex","AOffset"] };
 hxsl_ARead.AIndex = function(a) { var $x = ["AIndex",0,a]; $x.__enum__ = hxsl_ARead; $x.toString = $estr; return $x; };
 hxsl_ARead.AOffset = function(a,stride,delta) { var $x = ["AOffset",1,a,stride,delta]; $x.__enum__ = hxsl_ARead; $x.toString = $estr; return $x; };
 hxsl_ARead.__empty_constructs__ = [];
@@ -43212,6 +45459,7 @@ hxsl_SharedShader.prototype = {
 		$eval.inlineCalls = true;
 		$eval.unrollLoops = true;
 		var i = new hxsl_ShaderInstance($eval["eval"](this.data));
+		hxsl_Printer.check(i.shader,[this.data]);
 		this.paramsCount = 0;
 		var _g1 = 0;
 		var _g11 = this.data.vars;
@@ -43614,7 +45862,7 @@ hxsl_Splitter.prototype = {
 	}
 	,__class__: hxsl_Splitter
 };
-var invertotanks_Bullet = function(x,y,r,vx,vy,modRadius,damageRadius,damage,builder,inverse,above,origin) {
+var invertotanks_Bullet = function(x,y,r,vx,vy,modRadius,damageRadius,damage,builder,bounce,inverse,above,origin) {
 	this.x = x;
 	this.y = y;
 	this.r = r;
@@ -43624,6 +45872,7 @@ var invertotanks_Bullet = function(x,y,r,vx,vy,modRadius,damageRadius,damage,bui
 	this.damageRadius = damageRadius;
 	this.damage = damage;
 	this.builder = builder;
+	this.bounce = bounce;
 	this.inverse = inverse;
 	this.above = above;
 	this.originallyAbove = above;
@@ -43634,19 +45883,36 @@ invertotanks_Bullet.__name__ = ["invertotanks","Bullet"];
 invertotanks_Bullet.prototype = {
 	update: function(world) {
 		var _g = 0;
-		while(_g < 4) {
+		while(_g < 3) {
 			++_g;
-			var newPos = world.travel(this.x,this.y,this.vx,this.vy,this.above);
-			this.x = newPos.x;
-			this.y = newPos.y;
-			this.vx = newPos.vx;
-			this.vy = newPos.vy;
-			if(newPos.inverted) {
-				if(this.inverse-- <= 0) {
-					this.explode(world);
-					return true;
+			if(this.inverse > 0) {
+				var newPos = world.travel(this.x,this.y,this.vx,this.vy,this.above,false);
+				this.x = newPos.x;
+				this.y = newPos.y;
+				this.vx = newPos.vx;
+				this.vy = newPos.vy;
+				if(newPos.inverted) {
+					this.inverse--;
+					this.above = !this.above;
 				}
-				this.above = !this.above;
+			} else {
+				var newPos1 = world.travel(this.x,this.y,this.vx,this.vy,this.above,this.bounce);
+				haxe_Log.trace(this.x + "," + this.y + "->" + newPos1.x + "," + newPos1.y,{ fileName : "Bullet.hx", lineNumber : 57, className : "invertotanks.Bullet", methodName : "update"});
+				this.x = newPos1.x;
+				this.y = newPos1.y;
+				this.vx = newPos1.vx;
+				this.vy = newPos1.vy;
+				if(newPos1.inverted) {
+					if(this.bounce) {
+						if(Math.sqrt(this.vx * this.vx + this.vy * this.vy) < 2) {
+							this.explode(world);
+							return true;
+						}
+					} else {
+						this.explode(world);
+						return true;
+					}
+				}
 			}
 		}
 		return false;
@@ -43658,12 +45924,13 @@ invertotanks_Bullet.prototype = {
 	}
 	,__class__: invertotanks_Bullet
 };
-var invertotanks_BulletType = function(r,modRadius,damageRadius,damage,builder,inverse) {
+var invertotanks_BulletType = function(r,modRadius,damageRadius,damage,builder,bounce,inverse) {
 	this.r = r;
 	this.modRadius = modRadius;
 	this.damageRadius = damageRadius;
 	this.damage = damage;
 	this.builder = builder;
+	this.bounce = bounce;
 	this.inverse = inverse;
 };
 $hxClasses["invertotanks.BulletType"] = invertotanks_BulletType;
@@ -43834,23 +46101,21 @@ invertotanks_Main.prototype = $extend(hxd_App.prototype,{
 			heightMap.push(0);
 		}
 		var _g1 = 0;
-		while(_g1 < 128) {
-			++_g1;
-			heightMap.push(160);
-		}
+		while(_g1 < 64) heightMap.push(_g1++);
 		var _g2 = 0;
-		while(_g2 < 128) {
-			++_g2;
-			heightMap.push(0);
-		}
+		while(_g2 < 64) heightMap.push(64 - _g2++);
 		var _g3 = 0;
 		while(_g3 < 128) {
 			++_g3;
-			heightMap.push(-160);
+			heightMap.push(0);
 		}
 		var _g4 = 0;
-		while(_g4 < 128) {
-			++_g4;
+		while(_g4 < 64) heightMap.push(-(_g4++));
+		var _g5 = 0;
+		while(_g5 < 64) heightMap.push(_g5++ - 64);
+		var _g6 = 0;
+		while(_g6 < 128) {
+			++_g6;
 			heightMap.push(0);
 		}
 		var p = new invertotanks_Controller(87,83,65,68,81,69,82,70,32,16);
@@ -43935,7 +46200,7 @@ invertotanks_Tank.prototype = {
 		if(this.c != null) {
 			var precise = this.c.get_precise();
 			if(this.c.get_fire()) {
-				world.fire(this.force,this.degree,new invertotanks_BulletType(3,8,12,20,false,this.invertions),this);
+				world.fire(this.force,this.degree,new invertotanks_BulletType(3,24,12,20,false,true,this.invertions),this);
 				return true;
 			}
 			if(this.c.get_left()) {
@@ -44025,7 +46290,7 @@ var invertotanks_World = function(heightMap,tanks) {
 	this.tanks = tanks;
 	this.bullets = [];
 	this.explosions = [];
-	this.airResistance = 0.05;
+	this.airResistance = 0.99916666666666665;
 	this.gravity = 20;
 	this.wind = 0;
 	this.wallHeight = 640;
@@ -44036,6 +46301,16 @@ var invertotanks_World = function(heightMap,tanks) {
 };
 $hxClasses["invertotanks.World"] = invertotanks_World;
 invertotanks_World.__name__ = ["invertotanks","World"];
+invertotanks_World.reflect = function(dx,dy,wdx,wdy) {
+	var l = Math.sqrt(dx * dx + dy * dy);
+	var wl = Math.sqrt(wdx * wdx + wdy * wdy);
+	wdx /= wl;
+	wdy /= wl;
+	dx /= l;
+	dy /= l;
+	var angle = 2 * Math.acos(dx * wdx + dy * wdy);
+	haxe_Log.trace(dx + "," + dy + " * " + wdx + "," + wdy + ": " + (dx * Math.cos(angle) - dy * Math.sin(angle)) + "," + (dx * Math.sin(angle) + dy * Math.cos(angle)),{ fileName : "World.hx", lineNumber : 327, className : "invertotanks.World", methodName : "reflect"});
+};
 invertotanks_World.prototype = {
 	update: function() {
 		var _g = 0;
@@ -44113,33 +46388,72 @@ invertotanks_World.prototype = {
 			}
 		}
 	}
-	,travel: function(x,y,vx,vy,above) {
-		var xInt = x | 0;
+	,travel: function(x,y,vx,vy,above,bounce) {
+		var orgX = x;
+		var orgY = y;
 		var inverted = false;
 		var outside = false;
-		if(xInt < 0) {
-			xInt = 0;
+		if(x < 0) {
+			x = 0;
 			outside = true;
-		} else if(xInt >= this.heightMap.length) {
-			xInt = this.heightMap.length - 1;
+		} else if(x >= this.heightMap.length) {
+			x = this.heightMap.length - 1;
 			outside = true;
+		}
+		var xHeight = this.getHeight(x);
+		var startedUnder = y != xHeight;
+		if(startedUnder) {
+			startedUnder = above == y < xHeight;
 		}
 		y += invertotanks_Main.dt * vy / 60;
+		x += invertotanks_Main.dt * vx / 60 + invertotanks_Main.dt * this.wind / 60;
+		var nxHeight = this.getHeight(x);
 		if(above) {
-			if(y <= this.heightMap[xInt]) {
+			if(y <= nxHeight) {
 				inverted = true;
-			} else {
+			} else if(y > nxHeight + 0.1) {
 				vy -= invertotanks_Main.dt * this.gravity / 60;
 			}
-		} else if(y >= this.heightMap[xInt]) {
+		} else if(y >= nxHeight) {
 			inverted = true;
-		} else {
+		} else if(y < nxHeight - 0.1) {
 			vy += invertotanks_Main.dt * this.gravity / 60;
 		}
-		x += invertotanks_Main.dt * vx / 60 + invertotanks_Main.dt * this.wind / 60;
-		xInt = x | 0;
+		if(bounce && inverted) {
+			if(startedUnder) {
+				vy = 0;
+				vx = vy;
+			} else {
+				var xInt = x | 0;
+				var dx = vx;
+				var dy = vy;
+				var wdx = above?1.0:-1.0;
+				var wdy = above?this.heightMap[xInt + 1] - this.heightMap[xInt]:this.heightMap[xInt] - this.heightMap[xInt + 1];
+				var l = Math.sqrt(dx * dx + dy * dy);
+				var wl = Math.sqrt(1 + wdy * wdy);
+				wdx /= wl;
+				wdy /= wl;
+				dx /= l;
+				dy /= l;
+				var angle = 2 * Math.acos(dx * wdx + dy * wdy);
+				if(!isNaN(angle)) {
+					var nvx = vx * Math.cos(angle) - vy * Math.sin(angle);
+					var nvy = vx * Math.sin(angle) + vy * Math.cos(angle);
+					haxe_Log.trace(angle,{ fileName : "World.hx", lineNumber : 178, className : "invertotanks.World", methodName : "travel"});
+					vx = nvx;
+					vy = nvy;
+				} else {
+					vx = -vx;
+					vy = -vy;
+				}
+				x = orgX;
+				y = orgY;
+				vx *= 0.8;
+				vy *= 0.8;
+			}
+		}
 		if(!outside) {
-			if(xInt < 0) {
+			if(x < 0) {
 				if(y >= this.heightMap[0]) {
 					if(y < this.heightMap[0] + this.wallHeight) {
 						x = -x;
@@ -44149,7 +46463,7 @@ invertotanks_World.prototype = {
 					x = -x;
 					vx = -vx;
 				}
-			} else if(xInt >= this.heightMap.length) {
+			} else if(x >= this.heightMap.length) {
 				if(y >= this.heightMap[this.heightMap.length - 1]) {
 					if(y < this.heightMap[this.heightMap.length - 1] + this.wallHeight) {
 						x = 640 - (x - 640);
@@ -44161,15 +46475,15 @@ invertotanks_World.prototype = {
 				}
 			}
 		}
-		vx -= vx * (invertotanks_Main.dt * this.airResistance / 60);
-		vy -= vy * (invertotanks_Main.dt * this.airResistance / 60);
+		vx *= Math.pow(this.airResistance,invertotanks_Main.dt);
+		vy *= Math.pow(this.airResistance,invertotanks_Main.dt);
 		return { x : x, y : y, vx : vx, vy : vy, inverted : inverted};
 	}
 	,fire: function(force,degree,b,tank) {
 		var dx = Math.cos(degree);
 		var dy = -Math.sin(degree);
 		var height = this.getHeight(tank.x);
-		this.bullets.push(new invertotanks_Bullet(tank.x + dx * 8.5 * 1.5,height + dy * 8.5 * 1.5,b.r,dx * force,dy * force,b.modRadius,b.damageRadius,b.damage,b.builder,b.inverse,tank.above,tank));
+		this.bullets.push(new invertotanks_Bullet(tank.x + dx * 8.5 * 1.5,height + dy * 8.5 * 1.5,b.r,dx * force,dy * force,b.modRadius,b.damageRadius,b.damage,b.builder,b.bounce,b.inverse,tank.above,tank));
 	}
 	,canMove: function(x,right,above) {
 		if(above) {
@@ -44793,6 +47107,9 @@ h3d_shader_Texture.SRC = "oy4:funsaoy4:argsahy4:exproy1:ejy13:hxsl.TExprDef:4:1a
 h3d_shader_UVDelta.SRC = "oy4:funsaoy4:argsahy4:exproy1:ejy13:hxsl.TExprDef:4:1aoR3jR4:5:3jy16:haxe.macro.Binop:20:1jR5:0:0oR3jR4:1:1oy4:kindjy12:hxsl.VarKind:4:0y4:namey12:calculatedUVy4:typejy9:hxsl.Type:5:2i2jy12:hxsl.VecType:1:0y2:idi-207gy1:poy4:filey73:D%3A%5CHaxeToolkit%5Chaxe%5Clib%5Cheaps%2Fgit%2Fh3d%2Fshader%2FUVDelta.hxy3:maxi179y3:mini167gy1:tr13goR3jR4:1:1oR6jR7:2:0R8y7:uvDeltaR10jR11:5:2i2r12R13i-206gR14oR15R16R17i190R18i183gR19r19gR14oR15R16R17i190R18i167gR19r13ghR14oR15R16R17i196R18i161gR19jR11:0:0gR6jy17:hxsl.FunctionKind:0:0y3:refoR6jR7:6:0R8y6:vertexR10jR11:13:1aoR1ahy3:retr26ghR13i-208gR24r26ghR8y18:h3d.shader.UVDeltay4:varsar10r28r17hg";
 h3d_shader_VertexColorAlpha.SRC = "oy4:funsaoy4:argsahy4:exproy1:ejy13:hxsl.TExprDef:4:1aoR3jR4:10:3oR3jR4:1:1oy4:kindjy12:hxsl.VarKind:2:0y4:namey8:additivey4:typejy9:hxsl.Type:2:0y10:qualifiersajy17:hxsl.VarQualifier:0:1nhy2:idi-212gy1:poy4:filey82:D%3A%5CHaxeToolkit%5Chaxe%5Clib%5Cheaps%2Fgit%2Fh3d%2Fshader%2FVertexColorAlpha.hxy3:maxi245y3:mini237gy1:tr10goR3jR4:5:3jy16:haxe.macro.Binop:20:1jR20:0:0oR3jR4:1:1oR5jR6:4:0R7y10:pixelColorR9jR10:5:2i4jy12:hxsl.VecType:1:0R13i-211gR14oR15R16R17i263R18i253gR19r22goR3jR4:1:1oR5jR6:1:0R7y5:colorR9jR10:5:2i4r21y6:parentoR5r27R7y5:inputR9jR10:12:1ar26hR13i-209gR13i-210gR14oR15R16R17i278R18i267gR19r28gR14oR15R16R17i278R18i253gR19r22goR3jR4:5:3jR20:20:1jR20:1:0oR3jR4:1:1r19R14oR15R16R17i304R18i294gR19r22goR3jR4:1:1r26R14oR15R16R17i319R18i308gR19r28gR14oR15R16R17i319R18i294gR19r22gR14oR15R16R17i319R18i233gR19jR10:0:0ghR14oR15R16R17i325R18i227gR19r49gR5jy17:hxsl.FunctionKind:1:0y3:refoR5jR6:6:0R7y8:fragmentR9jR10:13:1aoR1ahy3:retr49ghR13i-213gR29r49ghR7y27:h3d.shader.VertexColorAlphay4:varsar53r8r29r19hg";
 h3d_shader_VolumeDecal.SRC = "oy4:funsaoy4:argsahy4:exproy1:ejy13:hxsl.TExprDef:4:1aoR3jR4:5:3jy16:haxe.macro.Binop:4:0oR3jR4:1:1oy4:kindjy12:hxsl.VarKind:4:0y4:namey17:transformedNormaly4:typejy9:hxsl.Type:5:2i3jy12:hxsl.VecType:1:0y2:idi-165gy1:poy4:filey77:D%3A%5CHaxeToolkit%5Chaxe%5Clib%5Cheaps%2Fgit%2Fh3d%2Fshader%2FVolumeDecal.hxy3:maxi282y3:mini265gy1:tr12goR3jR4:1:1oR6jR7:2:0R8y6:normalR10jR11:5:2i3r11R13i-178gR14oR15R16R17i291R18i285gR19r18gR14oR15R16R17i291R18i265gR19r12ghR14oR15R16R17i297R18i259gR19jR11:0:0gR6jy17:hxsl.FunctionKind:0:0y3:refoR6jR7:6:0R8y6:vertexR10jR11:13:1aoR1ahy3:retr25ghR13i-180gR24r25goR1ahR2oR3jR4:4:1aoR3jR4:7:2oR6r10R8y6:matrixR10jR11:7:0R13i-182goR3jR4:5:3jR5:1:0oR3jR4:1:1oR6jR7:0:0R8y15:inverseViewProjR10r39y6:parentoR6r44R8y6:cameraR10jR11:12:1aoR6r44R8y4:viewR10r39R27r45R13i-140goR6r44R8y4:projR10r39R27r45R13i-141goR6r44R8y8:positionR10jR11:5:2i3r11R27r45R13i-142goR6r44R8y8:projDiagR10jR11:5:2i3r11R27r45R13i-143goR6r44R8y8:viewProjR10r39R27r45R13i-144gr43oR6r44R8y5:zNearR10jR11:3:0R27r45R13i-146goR6r44R8y4:zFarR10r55R27r45R13i-147goR6jR7:3:0R8y3:dirR10jR11:5:2i3r11R27r45R13i-148ghR13i-139gR13i-145gR14oR15R16R17i364R18i342gR19r39goR3jR4:1:1oR6r44R8y16:modelViewInverseR10r39R27oR6r44R8y6:globalR10jR11:12:1aoR6r44R8y4:timeR10r55R27r65R13i-150goR6r44R8y9:pixelSizeR10jR11:5:2i2r11R27r65R13i-151goR6r44R8y9:modelViewR10r39R27r65y10:qualifiersajy17:hxsl.VarQualifier:3:0hR13i-152gr64hR13i-149gR42ar72hR13i-153gR14oR15R16R17i390R18i367gR19r39gR14oR15R16R17i390R18i342gR19r39gR14oR15R16R17i391R18i329gR19r25goR3jR4:7:2oR6r10R8y9:screenPosR10jR11:5:2i2r11R13i-183goR3jR4:5:3jR5:2:0oR3jR4:9:2oR3jR4:1:1oR6r10R8y17:projectedPositionR10jR11:5:2i4r11R13i-166gR14oR15R16R17i429R18i412gR19r89gajy14:hxsl.Component:0:0jR46:1:0hR14oR15R16R17i432R18i412gR19r83goR3jR4:9:2oR3jR4:1:1r88R14oR15R16R17i452R18i435gR19r89gajR46:3:0hR14oR15R16R17i454R18i435gR19r55gR14oR15R16R17i454R18i412gR19r83gR14oR15R16R17i455R18i396gR19r25goR3jR4:7:2oR6r10R8y3:tuvR10jR11:5:2i2r11R13i-184goR3jR4:5:3jR5:0:0oR3jR4:5:3r41oR3jR4:1:1r82R14oR15R16R17i479R18i470gR19r83goR3jR4:8:2oR3jR4:2:1jy12:hxsl.TGlobal:38:0R14oR15R16R17i486R18i482gR19jR11:13:1ahgaoR3jR4:0:1jy10:hxsl.Const:3:1d0.5R14oR15R16R17i490R18i487gR19r55goR3jR4:0:1jR49:3:1d-0.5R14oR15R16R17i496R18i492gR19r55ghR14oR15R16R17i497R18i482gR19jR11:5:2i2r11gR14oR15R16R17i497R18i470gR19jR11:5:2i2r11goR3jR4:8:2oR3jR4:2:1r120R14oR15R16R17i504R18i500gR19r124gaoR3jR4:0:1jR49:3:1d0.5R14oR15R16R17i508R18i505gR19r55goR3jR4:0:1jR49:3:1d0.5R14oR15R16R17i513R18i510gR19r55ghR14oR15R16R17i514R18i500gR19jR11:5:2i2r11gR14oR15R16R17i514R18i470gR19r111gR14oR15R16R17i515R18i460gR19r25goR3jR4:7:2oR6r10R8y3:ruvR10jR11:5:2i4r11R13i-185goR3jR4:8:2oR3jR4:2:1jR48:40:0R14oR15R16R17i534R18i530gR19jR11:13:1ahgaoR3jR4:1:1r82R14oR15R16R17i550R18i541gR19r83goR3jR4:8:2oR3jR4:2:1jR48:53:0R14oR15R16R17i563R18i557gR19jR11:13:1aoR1aoR8y5:valueR10jR11:5:2i4r11ghR24r55ghgaoR3jR4:8:2oR3jR4:2:1jR48:33:0R14oR15R16R17i572R18i564gR19jR11:13:1aoR1aoR8y1:_R10jR11:10:0goR8y1:bR10jR11:5:2i2r11ghR24jR11:5:2i4r11ghgaoR3jR4:1:1oR6r44R8y8:depthMapR10r195R13i-176gR14oR15R16R17i572R18i564gR19r195goR3jR4:1:1r110R14oR15R16R17i580R18i577gR19r111ghR14oR15R16R17i581R18i564gR19r198ghR14oR15R16R17i582R18i557gR19r55goR3jR4:0:1jR49:3:1i1R14oR15R16R17i590R18i589gR19r55ghR14oR15R16R17i596R18i530gR19r162gR14oR15R16R17i597R18i520gR19r25goR3jR4:7:2oR6r10R8y4:wposR10r198R13i-186goR3jR4:5:3r41oR3jR4:1:1r161R14oR15R16R17i616R18i613gR19r162goR3jR4:1:1r38R14oR15R16R17i625R18i619gR19r39gR14oR15R16R17i625R18i613gR19r198gR14oR15R16R17i626R18i602gR19r25goR3jR4:7:2oR6r10R8y4:pposR10r198R13i-187goR3jR4:5:3r41oR3jR4:1:1r161R14oR15R16R17i645R18i642gR19r162goR3jR4:1:1r43R14oR15R16R17i670R18i648gR19r39gR14oR15R16R17i670R18i642gR19r198gR14oR15R16R17i671R18i631gR19r25goR3jR4:5:3r7oR3jR4:1:1oR6r10R8y24:pixelTransformedPositionR10jR11:5:2i3r11R13i-164gR14oR15R16R17i700R18i676gR19r249goR3jR4:5:3r85oR3jR4:9:2oR3jR4:1:1r234R14oR15R16R17i707R18i703gR19r198gar93r94jR46:2:0hR14oR15R16R17i711R18i703gR19jR11:5:2i3r11goR3jR4:9:2oR3jR4:1:1r234R14oR15R16R17i718R18i714gR19r198gar102hR14oR15R16R17i720R18i714gR19r55gR14oR15R16R17i720R18i703gR19r261gR14oR15R16R17i720R18i676gR19r249goR3jR4:5:3r7oR3jR4:1:1oR6r10R8y12:calculatedUVR10jR11:5:2i2r11R13i-179gR14oR15R16R17i738R18i726gR19r276goR3jR4:5:3r113oR3jR4:5:3r41oR3jR4:1:1oR6r17R8y5:scaleR10jR11:5:2i2r11R13i-177gR14oR15R16R17i746R18i741gR19r283goR3jR4:3:1oR3jR4:5:3r85oR3jR4:9:2oR3jR4:1:1r221R14oR15R16R17i754R18i750gR19r198gar93r94hR14oR15R16R17i757R18i750gR19jR11:5:2i2r11goR3jR4:9:2oR3jR4:1:1r221R14oR15R16R17i764R18i760gR19r198gar102hR14oR15R16R17i766R18i760gR19r55gR14oR15R16R17i766R18i750gR19r295gR14oR15R16R17i767R18i749gR19r295gR14oR15R16R17i767R18i741gR19jR11:5:2i2r11goR3jR4:0:1jR49:3:1d0.5R14oR15R16R17i773R18i770gR19r55gR14oR15R16R17i773R18i741gR19r309gR14oR15R16R17i773R18i726gR19r276goR3jR4:10:3oR3jR4:5:3jR5:9:0oR3jR4:8:2oR3jR4:2:1jR48:21:0R14oR15R16R17i786R18i783gR19jR11:13:1aoR1aoR8y1:aR10r55goR8R53R10r55ghR24r55ghgaoR3jR4:8:2oR3jR4:2:1r323R14oR15R16R17i790R18i787gR19jR11:13:1ar327hgaoR3jR4:9:2oR3jR4:1:1r275R14oR15R16R17i803R18i791gR19r276gar93hR14oR15R16R17i805R18i791gR19r55goR3jR4:9:2oR3jR4:1:1r275R14oR15R16R17i819R18i807gR19r276gar94hR14oR15R16R17i821R18i807gR19r55ghR14oR15R16R17i822R18i787gR19r55goR3jR4:8:2oR3jR4:2:1r323R14oR15R16R17i827R18i824gR19jR11:13:1ar327hgaoR3jR4:5:3jR5:3:0oR3jR4:0:1jR49:3:1i1R14oR15R16R17i829R18i828gR19r55goR3jR4:9:2oR3jR4:1:1r275R14oR15R16R17i844R18i832gR19r276gar93hR14oR15R16R17i846R18i832gR19r55gR14oR15R16R17i846R18i828gR19r55goR3jR4:5:3r364oR3jR4:0:1jR49:3:1i1R14oR15R16R17i849R18i848gR19r55goR3jR4:9:2oR3jR4:1:1r275R14oR15R16R17i864R18i852gR19r276gar94hR14oR15R16R17i866R18i852gR19r55gR14oR15R16R17i866R18i848gR19r55ghR14oR15R16R17i867R18i824gR19r55ghR14oR15R16R17i868R18i783gR19r55goR3jR4:0:1jR49:3:1zR14oR15R16R17i872R18i871gR19r55gR14oR15R16R17i872R18i783gR19jR11:2:0goR3jR4:11:0R14oR15R16R17i882R18i875gR19r25gnR14oR15R16R17i882R18i779gR19r25ghR14oR15R16R17i888R18i323gR19r25gR6jR21:1:0R22oR6r28R8y8:fragmentR10jR11:13:1aoR1ahR24r25ghR13i-181gR24r25ghR8y22:h3d.shader.VolumeDecaly4:varsar88oR6r10R8y5:depthR10r55R13i-168gr275r27r9r282oR6r10R8y9:specColorR10jR11:5:2i3r11R13i-171gr16r411r202oR6r10R8y16:relativePositionR10jR11:5:2i3r11R13i-162gr45oR6jR7:5:0R8y6:outputR10jR11:12:1aoR6r423R8R31R10jR11:5:2i4r11R27r422R13i-158goR6r423R8y5:colorR10jR11:5:2i4r11R27r422R13i-159goR6r423R8R64R10jR11:5:2i4r11R27r422R13i-160goR6r423R8R20R10jR11:5:2i4r11R27r422R13i-161ghR13i-157goR6r10R8y8:screenUVR10jR11:5:2i2r11R13i-169gr65oR6jR7:1:0R8y5:inputR10jR11:12:1aoR6r437R8R31R10jR11:5:2i3r11R27r436R13i-155goR6r437R8R20R10jR11:5:2i3r11R27r436R13i-156ghR13i-154goR6r10R8y19:transformedPositionR10jR11:5:2i3r11R13i-163goR6r10R8y9:specPowerR10r55R13i-170gr248oR6r10R8y10:pixelColorR10jR11:5:2i4r11R13i-167ghg";
+haxe_Serializer.USE_CACHE = false;
+haxe_Serializer.USE_ENUM_INDEX = false;
+haxe_Serializer.BASE64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789%:";
 haxe_Unserializer.DEFAULT_RESOLVER = new haxe__$Unserializer_DefaultResolver();
 haxe_Unserializer.BASE64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789%:";
 haxe_crypto_Base64.CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -44971,7 +47288,7 @@ hxd_impl_Memory.stack = [];
 hxd_impl_Memory.inst = new hxd_impl_MemoryReader();
 hxd_impl_Tmp.bytes = [];
 hxd_poly2tri_Point.C_ID = 0;
-hxd_res_Resource.LIVE_UPDATE = false;
+hxd_res_Resource.LIVE_UPDATE = true;
 hxd_res_FontBuilder.FONTS = new haxe_ds_StringMap();
 hxd_res__$Image_ImageFormat_$Impl_$.Jpg = 0;
 hxd_res__$Image_ImageFormat_$Impl_$.Png = 1;
@@ -45058,7 +47375,7 @@ hxsl_GlslOut.GLOBALS = (function($this) {
 hxsl_GlslOut.MAT34 = "struct _mat3x4 { vec4 a; vec4 b; vec4 c; };";
 hxsl_Printer.SWIZ = ["x","y","z","w"];
 hxsl_RuntimeShader.UID = 0;
-invertotanks_Bullet.bulletSpeedUp = 4;
+invertotanks_Bullet.bulletSpeedUp = 3;
 invertotanks_Tank.vx = 0.65;
 invertotanks_Tank.vf = 0.5;
 invertotanks_Tank.vd = 0.032724923466666667;
@@ -45067,6 +47384,7 @@ invertotanks_Tank.sTime = 1.5;
 invertotanks_Tank.maxHealth = 100.0;
 invertotanks_Tank.maxFuel = 40.0;
 invertotanks_World.tankMaxHeightDist = 7;
+invertotanks_World.bulletBounceLoss = 0.8;
 invertotanks_World.tankSize = 8.5;
 invertotanks_World.healthHeight = 16.5;
 invertotanks_World.minPlayerIndicatorArrowHeight = 21.5;
@@ -45075,3 +47393,5 @@ js_html_compat_Float32Array.BYTES_PER_ELEMENT = 4;
 js_html_compat_Uint8Array.BYTES_PER_ELEMENT = 1;
 invertotanks_Main.main();
 })(typeof window != "undefined" ? window : typeof global != "undefined" ? global : typeof self != "undefined" ? self : this);
+
+//# sourceMappingURL=InvertoTanks.js.map

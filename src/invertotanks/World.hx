@@ -11,6 +11,7 @@ import haxe.macro.Format;
  */
 class World{
 	private static inline var tankMaxHeightDist = 7;
+	private static inline var bulletBounceLoss = 0.8;
 	private static inline var tankSize:Float = 8.5;
 	private static inline var healthHeight:Float = tankSize+8;
 	private static inline var minPlayerIndicatorArrowHeight:Float = healthHeight+5;
@@ -37,7 +38,7 @@ class World{
 		bullets = new Array();
 		explosions = new Array();
 		
-		airResistance = 0.05;
+		airResistance = 1-0.05/60;
 		gravity = 20;
 		wind = 0;
 		wallHeight = 640;
@@ -114,37 +115,85 @@ class World{
 		}
 	}
 	
-	public function travel(x:Float,y:Float,vx:Float,vy:Float,above:Bool){
-		var xInt = Std.int(x);
+	public function travel(x:Float, y:Float, vx:Float, vy:Float, above:Bool, bounce:Bool){
+		var orgX = x;
+		var orgY = y;
+		
 		var inverted = false;
 		var outside = false;
-		if (xInt < 0){
-			xInt = 0;
+		if (x < 0){
+			x = 0;
 			outside = true;
-		}else if (xInt >= heightMap.length){
-			xInt = heightMap.length - 1;
+		}else if (x >= heightMap.length){
+			x = heightMap.length - 1;
 			outside = true;
 		}
+		
+		var xHeight = getHeight(x);
+		
+		var startedUnder = y != xHeight;
+		if (startedUnder){
+			startedUnder = (above == (y < xHeight));
+		}
+		
 		y += Main.dt*vy/60;
+		x += Main.dt * vx / 60 + Main.dt * wind / 60;
+		
+		var nxHeight = getHeight(x);
 		if (above){
-			if (y <= heightMap[xInt]){
+			if (y <= nxHeight){
 				inverted = true;
-			}else{
-				vy -= Main.dt*gravity/60;
+			}else if(y>nxHeight+0.1){
+				vy -= Main.dt * gravity / 60;
 			}
 		}else{
-			if (y >= heightMap[xInt]){
+			if (y >= nxHeight){
 				inverted = true;
-			}else{
+			}else if(y<nxHeight-0.1){
 				vy += Main.dt*gravity/60;				
 			}
 		}
-		
-		x += Main.dt*vx / 60 + Main.dt*wind / 60;
-		xInt = Std.int(x);
+	
+		if (bounce && inverted){
+			if (startedUnder){
+				vx = vy = 0;
+			}else{
+				var xInt = Std.int(x);				
+				var dx = vx; var dy = vy;
+				var wdx = above?1.0:-1.0;
+				var wdy = above?heightMap[xInt+1]-heightMap[xInt]:heightMap[xInt]-heightMap[xInt+1];
+				
+				var l = Math.sqrt(dx * dx + dy * dy);
+				var wl = Math.sqrt(1 + wdy * wdy);
+				
+				wdx /= wl;
+				wdy /= wl;
+				dx /= l;
+				dy /= l;
+				
+				var angle = 2 * Math.acos(dx * wdx + dy * wdy);
+				if(!Math.isNaN(angle)){					
+					var nvx = vx * Math.cos(angle) - vy * Math.sin(angle);
+					var nvy = vx * Math.sin(angle) + vy * Math.cos(angle);
+					trace(angle);
+					vx = nvx;
+					vy = nvy;
+				}else{
+					vx = -vx;
+					vy = -vy;
+				}
+				
+				//Consider calculating exact point of collision to get better reflection
+				x = orgX;
+				y = orgY;
+				
+				vx *= bulletBounceLoss;
+				vy *= bulletBounceLoss;
+			}
+		}
 		
 		if(!outside){
-			if (xInt < 0){
+			if (x < 0){
 				if (y >= heightMap[0]){
 					if (y < heightMap[0] + wallHeight){
 						x = -x;
@@ -156,7 +205,7 @@ class World{
 						vx = -vx;
 					}
 				}
-			}else if (xInt >= heightMap.length){
+			}else if (x >= heightMap.length){
 				if (y >= heightMap[heightMap.length-1]){
 					if (y < heightMap[heightMap.length-1] + wallHeight){
 						x = 640-(x-640);
@@ -171,8 +220,8 @@ class World{
 			}
 		}
 		
-		vx -= vx * (Main.dt*airResistance/60);
-		vy -= vy * (Main.dt*airResistance/60);
+		vx *= Math.pow(airResistance, Main.dt);
+		vy *= Math.pow(airResistance, Main.dt);
 		
 		return {x:x, y:y, vx:vx, vy:vy, inverted:inverted};
 	}
@@ -183,7 +232,7 @@ class World{
 		var height = getHeight(tank.x);
 		
 		bullets.push(new Bullet(tank.x + dx * tankSize * 1.5, height + dy * tankSize * 1.5, b.r, dx * force, 
-			dy * force, b.modRadius, b.damageRadius, b.damage, b.builder, b.inverse, tank.above, tank));
+			dy * force, b.modRadius, b.damageRadius, b.damage, b.builder, b.bounce, b.inverse, tank.above, tank));
 	}
 
 	public function canMove(x:Float, right:Bool,above:Bool):Bool{
@@ -262,4 +311,20 @@ class World{
 		}
 	}
 
+	public static function reflect(dx:Float,dy:Float,wdx:Float,wdy:Float){		
+		var l = Math.sqrt(dx * dx + dy * dy);
+		var wl = Math.sqrt(wdx * wdx + wdy * wdy);
+		
+		wdx /= wl;
+		wdy /= wl;
+		dx /= l;
+		dy /= l;
+		
+		var angle = 2*Math.acos(dx * wdx + dy * wdy);
+		
+		var ndx = dx * Math.cos(angle) - dy * Math.sin(angle);
+		var ndy = dx * Math.sin(angle) + dy * Math.cos(angle);
+		trace(dx + "," + dy + " * "+wdx+","+wdy+": " + ndx + "," + ndy);
+	}
+	
 }
