@@ -109,6 +109,7 @@ class World{
 		for (tank in tanks){
 			var dx = tank.x - x;
 			var dy = getHeight(tank.x) - y;
+			r += tankSize;
 			if ((dx * dx + dy * dy) <= r*r){
 				tank.damage(d);
 			}
@@ -226,13 +227,13 @@ class World{
 		return {x:x, y:y, vx:vx, vy:vy, inverted:inverted};
 	}
 	
-	public function fire(force:Float, degree:Float, b:BulletType, tank:Tank){
+	public function fire(force:Float, degree:Float, inverse:Int, b:BulletType, tank:Tank){
 		var dx = Math.cos(degree);
 		var dy = -Math.sin(degree);
 		var height = getHeight(tank.x);
 		
 		bullets.push(new Bullet(tank.x + dx * tankSize * 1.5, height + dy * tankSize * 1.5, b.r, dx * force, 
-			dy * force, b.modRadius, b.damageRadius, b.damage, b.builder, b.bounce, b.inverse, tank.above, tank));
+			dy * force, b.modRadius, b.damageRadius, b.damage, b.builder, b.bounce, inverse, tank.above, tank));
 	}
 
 	public function canMove(x:Float, right:Bool,above:Bool):Bool{
@@ -309,22 +310,5 @@ class World{
 			g.setColor(0xFFFFFF,explosion.a*0.7);
 			g.drawCircle(explosion.x, 240-explosion.y, explosion.r);
 		}
-	}
-
-	public static function reflect(dx:Float,dy:Float,wdx:Float,wdy:Float){		
-		var l = Math.sqrt(dx * dx + dy * dy);
-		var wl = Math.sqrt(wdx * wdx + wdy * wdy);
-		
-		wdx /= wl;
-		wdy /= wl;
-		dx /= l;
-		dy /= l;
-		
-		var angle = 2*Math.acos(dx * wdx + dy * wdy);
-		
-		var ndx = dx * Math.cos(angle) - dy * Math.sin(angle);
-		var ndy = dx * Math.sin(angle) + dy * Math.cos(angle);
-		trace(dx + "," + dy + " * "+wdx+","+wdy+": " + ndx + "," + ndy);
-	}
-	
+	}	
 }

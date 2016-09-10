@@ -71,15 +71,6 @@ class Main extends App {
 		
 		world = new World(heightMap,tanks);
 		world.draw(g);
-		
-		/*for (dx in -2...2){
-			for (dy in -1...1){
-				World.reflect(dx, dy, 1, 0);
-				World.reflect(dx, dy, -1, 0);
-				World.reflect(dx, dy, 0, 1);
-				World.reflect(dx, dy, 0, -1);
-			}			
-		}*/
 	}
 	
 	override function update(dt:Float) {

@@ -45924,14 +45924,13 @@ invertotanks_Bullet.prototype = {
 	}
 	,__class__: invertotanks_Bullet
 };
-var invertotanks_BulletType = function(r,modRadius,damageRadius,damage,builder,bounce,inverse) {
+var invertotanks_BulletType = function(r,modRadius,damageRadius,damage,builder,bounce) {
 	this.r = r;
 	this.modRadius = modRadius;
 	this.damageRadius = damageRadius;
 	this.damage = damage;
 	this.builder = builder;
 	this.bounce = bounce;
-	this.inverse = inverse;
 };
 $hxClasses["invertotanks.BulletType"] = invertotanks_BulletType;
 invertotanks_BulletType.__name__ = ["invertotanks","BulletType"];
@@ -46200,7 +46199,7 @@ invertotanks_Tank.prototype = {
 		if(this.c != null) {
 			var precise = this.c.get_precise();
 			if(this.c.get_fire()) {
-				world.fire(this.force,this.degree,new invertotanks_BulletType(3,24,12,20,false,true,this.invertions),this);
+				world.fire(this.force,this.degree,this.invertions,new invertotanks_BulletType(3,24,12,20,false,true),this);
 				return true;
 			}
 			if(this.c.get_left()) {
@@ -46301,16 +46300,6 @@ var invertotanks_World = function(heightMap,tanks) {
 };
 $hxClasses["invertotanks.World"] = invertotanks_World;
 invertotanks_World.__name__ = ["invertotanks","World"];
-invertotanks_World.reflect = function(dx,dy,wdx,wdy) {
-	var l = Math.sqrt(dx * dx + dy * dy);
-	var wl = Math.sqrt(wdx * wdx + wdy * wdy);
-	wdx /= wl;
-	wdy /= wl;
-	dx /= l;
-	dy /= l;
-	var angle = 2 * Math.acos(dx * wdx + dy * wdy);
-	haxe_Log.trace(dx + "," + dy + " * " + wdx + "," + wdy + ": " + (dx * Math.cos(angle) - dy * Math.sin(angle)) + "," + (dx * Math.sin(angle) + dy * Math.cos(angle)),{ fileName : "World.hx", lineNumber : 327, className : "invertotanks.World", methodName : "reflect"});
-};
 invertotanks_World.prototype = {
 	update: function() {
 		var _g = 0;
@@ -46383,6 +46372,7 @@ invertotanks_World.prototype = {
 			++_g;
 			var dx = tank.x - x;
 			var dy = this.getHeight(tank.x) - y;
+			r += 8.5;
 			if(dx * dx + dy * dy <= r * r) {
 				tank.damage(d);
 			}
@@ -46439,7 +46429,7 @@ invertotanks_World.prototype = {
 				if(!isNaN(angle)) {
 					var nvx = vx * Math.cos(angle) - vy * Math.sin(angle);
 					var nvy = vx * Math.sin(angle) + vy * Math.cos(angle);
-					haxe_Log.trace(angle,{ fileName : "World.hx", lineNumber : 178, className : "invertotanks.World", methodName : "travel"});
+					haxe_Log.trace(angle,{ fileName : "World.hx", lineNumber : 179, className : "invertotanks.World", methodName : "travel"});
 					vx = nvx;
 					vy = nvy;
 				} else {
@@ -46479,11 +46469,11 @@ invertotanks_World.prototype = {
 		vy *= Math.pow(this.airResistance,invertotanks_Main.dt);
 		return { x : x, y : y, vx : vx, vy : vy, inverted : inverted};
 	}
-	,fire: function(force,degree,b,tank) {
+	,fire: function(force,degree,inverse,b,tank) {
 		var dx = Math.cos(degree);
 		var dy = -Math.sin(degree);
 		var height = this.getHeight(tank.x);
-		this.bullets.push(new invertotanks_Bullet(tank.x + dx * 8.5 * 1.5,height + dy * 8.5 * 1.5,b.r,dx * force,dy * force,b.modRadius,b.damageRadius,b.damage,b.builder,b.bounce,b.inverse,tank.above,tank));
+		this.bullets.push(new invertotanks_Bullet(tank.x + dx * 8.5 * 1.5,height + dy * 8.5 * 1.5,b.r,dx * force,dy * force,b.modRadius,b.damageRadius,b.damage,b.builder,b.bounce,inverse,tank.above,tank));
 	}
 	,canMove: function(x,right,above) {
 		if(above) {
