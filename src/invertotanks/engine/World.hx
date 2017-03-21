@@ -1,9 +1,27 @@
-package invertotanks;
+/*
+    This file is part of InvertoTanks.
+
+    Foobar is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    InvertoTanks is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with InvertoTanks.  If not, see <http://www.gnu.org/licenses/>.
+*/
+	
+package invertotanks.engine;
 import format.neko.Builtins;
 import h2d.Graphics;
 import h2d.col.Point;
 import h2d.col.Ray;
 import haxe.macro.Format;
+import invertotanks.engine.Tank;
 
 /**
  * ...
@@ -29,7 +47,7 @@ class World{
 	var currentTank:Int;
 
 	var bullets:Array<Bullet>;
-	var explosions:Array<Explosion>;
+	var explosions:Array<GraphicalExplosion>;
 	
 	public function new(heightMap:Array<Float>, tanks:Array<Tank>){
 		this.heightMap = heightMap;
@@ -101,7 +119,7 @@ class World{
 		}
 	}
 	
-	public function gExplode(explosion:Explosion){
+	public function gExplode(explosion:GraphicalExplosion){
 		explosions.push(explosion);
 	}
 	
@@ -232,10 +250,14 @@ class World{
 		var dy = -Math.sin(degree);
 		var height = getHeight(tank.x);
 		
-		bullets.push(new Bullet(tank.x + dx * tankSize * 1.5, height + dy * tankSize * 1.5, b.r, dx * force, 
-			dy * force, b.modRadius, b.damageRadius, b.damage, b.builder, b.bounce, inverse, tank.above, tank));
+		bullets.push(b.GetBullet(tank.x + dx * tankSize * 1.5, height + dy * tankSize * 1.5, 
+			b.r, dx * force, dy * force,inverse,tank));
 	}
 
+	public function addBullet(bullet:Bullet){
+		bullets.push(bullet);
+	}
+	
 	public function canMove(x:Float, right:Bool,above:Bool):Bool{
 		if (above){
 			return getHeight(x + (right?1: -1)) -getHeight(x) <= tankMaxHeightDist; 
@@ -291,10 +313,12 @@ class World{
 		}
 		if(bullets.length!=0){
 			for (bullet in bullets){
-				g.beginFill(0x000000);
-				g.drawCircle(bullet.x, 240-bullet.y, bullet.r);
-				g.beginFill(0xFFFFFF);
-				g.drawCircle(bullet.x, 240-bullet.y, bullet.r-1);
+				if(bullet.r!=0){
+					g.beginFill(0x000000);
+					g.drawCircle(bullet.x, 240-bullet.y, bullet.r);
+					g.beginFill(0xFFFFFF);
+					g.drawCircle(bullet.x, 240 - bullet.y, bullet.r - 1);
+				}
 			}
 		}else{
 			var tank = tanks[currentTank];

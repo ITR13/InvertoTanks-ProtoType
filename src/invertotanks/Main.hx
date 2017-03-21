@@ -1,3 +1,21 @@
+/*
+    This file is part of InvertoTanks.
+
+    Foobar is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    InvertoTanks is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with InvertoTanks.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
 package invertotanks;
 import format.agal.Data.Tex;
 import h2d.Anim;
@@ -11,6 +29,9 @@ import haxe.io.Bytes;
 import hxd.Pixels;
 import hxd.Res;
 import hxd.res.Font;
+import invertotanks.Controller;
+import invertotanks.engine.Tank;
+import invertotanks.engine.World;
 import js.html.Uint8ClampedArray;
 import hxd.Key;
 
@@ -18,14 +39,15 @@ import js.Lib;
 
 import hxd.App;
 class Main extends App {	
-	var world:World;
+	public var world:World;
+	public var showMenu:Bool;
 	var g:Graphics;
 	var font:h2d.Font;
 	public static var dt(default, null):Float;
 	
 	static var instance:Main;
 	
-	var counter:Int;
+	var counter:dt;
 	override function init() {
 		g = new Graphics(s2d);
 		onResize();
@@ -79,9 +101,13 @@ class Main extends App {
 		}else{
 			Main.dt = dt;
 		}
-		
-		world.update();
-		world.draw(g);
+		if (world != null&&showMenu){
+			world.update();
+			world.draw(g);	
+		}else{
+			showMenu.update();
+			showMenu.draw(g);
+		}
 	}
 	
 	static function main() {
